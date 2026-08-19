@@ -45,9 +45,21 @@
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
 
-        .chat-container {
-            height: calc(100vh - 8rem);
-            max-height: 800px;
+        .chat-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            bottom: 1rem;
+            width: 320px;
+            max-width: calc(100% - 2rem);
+            background-color: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         #chat-messages {
@@ -142,63 +154,58 @@
         </div>
 
         <!-- STREAM VIEW -->
-        <div id="stream-view" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 flex-grow">
+        <div id="stream-view" class="hidden flex-col gap-4 flex-grow w-full max-w-6xl mx-auto">
             
-            <!-- Left: Video Area -->
-            <div class="lg:col-span-3 flex flex-col gap-4">
+            <div class="bg-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 border border-slate-700 w-full">
+                <div class="flex items-center gap-3">
+                    <div id="stream-live-indicator" class="h-3 w-3 rounded-full bg-red-500"></div>
+                    <span id="stream-role-label" class="font-semibold text-white">Role: Not Set</span>
+                </div>
                 
-                <!-- Status Bar -->
-                <div class="bg-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 border border-slate-700">
-                    <div class="flex items-center gap-3">
-                        <div id="stream-live-indicator" class="h-3 w-3 rounded-full bg-red-500"></div>
-                        <span id="stream-role-label" class="font-semibold text-white">Role: Not Set</span>
-                    </div>
-                    
-                    <div id="viewer-count-container" class="hidden flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-lg border border-slate-700">
-                        <i class="fa-solid fa-eye text-slate-400"></i>
-                        <span id="viewer-count" class="font-bold text-indigo-400">0</span>
-                    </div>
-
-                    <button onclick="resetApp()" class="text-sm bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors">
-                        Leave Stream
-                    </button>
+                <div id="viewer-count-container" class="hidden flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-eye text-slate-400"></i>
+                    <span id="viewer-count" class="font-bold text-indigo-400">0</span>
                 </div>
 
-                <!-- Video Player -->
-                <div class="video-container group">
-                    <video id="main-video" autoplay playsinline class="w-full h-full bg-black"></video>
-                    
-                    <!-- Overlay Message -->
-                    <div id="video-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-10">
-                        <i id="overlay-icon" class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
-                        <p id="overlay-text" class="text-lg font-medium text-white">Initializing...</p>
-                    </div>
-                </div>
+                <button onclick="resetApp()" class="text-sm bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Leave Stream
+                </button>
             </div>
 
-            <!-- Right: Chat Area -->
-            <div class="lg:col-span-1 bg-slate-800 rounded-xl border border-slate-700 flex flex-col chat-container">
-                <!-- Chat Header -->
-                <div class="px-4 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 rounded-t-xl">
-                    <h3 class="font-bold text-white flex items-center gap-2">
-                        <i class="fa-regular fa-comments text-indigo-400"></i> Global Chat
-                    </h3>
-                    <span id="chat-status" class="text-xs font-medium px-2 py-1 bg-slate-700 text-slate-300 rounded-full">
-                        Connecting...
-                    </span>
-                </div>
+            <div id="video-container" class="video-container group w-full relative">
+                <video id="main-video" autoplay playsinline class="w-full h-full bg-black"></video>
                 
-                <!-- Chat Messages -->
-                <div id="chat-messages" class="flex-grow p-4 text-sm">
-                    <div class="text-center text-slate-500 text-xs italic my-2">Welcome to the P2P Chat Room.</div>
+                <!-- Overlay Message -->
+                <div id="video-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-10">
+                    <i id="overlay-icon" class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
+                    <p id="overlay-text" class="text-lg font-medium text-white">Initializing...</p>
                 </div>
-                
-                <!-- Chat Input -->
-                <div class="p-3 border-t border-slate-700 bg-slate-900 rounded-b-xl flex gap-2">
-                    <input type="text" id="chat-input" disabled placeholder="Waiting for connection..." class="flex-grow bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50" onkeypress="handleKeyPress(event)">
-                    <button id="btn-send-chat" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onclick="sendChatMessage()">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
+
+                <!-- Floating Chat Overlay -->
+                <div id="chat-overlay" class="chat-overlay">
+                    <!-- Chat Header -->
+                    <div id="chat-header" class="px-4 py-3 border-b border-slate-600/50 flex justify-between items-center rounded-t-xl cursor-move hover:bg-slate-700/50 transition-colors" title="Drag to move chat">
+                        <h3 class="font-bold text-white flex items-center gap-2 text-sm pointer-events-none">
+                            <i class="fa-solid fa-grip-vertical text-slate-400"></i>
+                            <i class="fa-regular fa-comments text-indigo-400"></i> Chat
+                        </h3>
+                        <span id="chat-status" class="text-[10px] font-medium px-2 py-0.5 bg-slate-700 text-slate-300 rounded-full">
+                            Connecting...
+                        </span>
+                    </div>
+                    
+                    <!-- Chat Messages -->
+                    <div id="chat-messages" class="flex-grow p-3 text-sm scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+                        <div class="text-center text-slate-400/80 text-xs italic my-2">Welcome to the P2P Chat Room.</div>
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div class="p-2 border-t border-slate-600/50 rounded-b-xl flex gap-2 bg-slate-900/50">
+                        <input type="text" id="chat-input" disabled placeholder="Waiting..." class="flex-grow bg-slate-800/80 border border-slate-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50 placeholder-slate-500" onkeypress="handleKeyPress(event)">
+                        <button id="btn-send-chat" disabled class="bg-indigo-600/90 hover:bg-indigo-600 text-white rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onclick="sendChatMessage()">
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -243,6 +250,7 @@
             streamView: document.getElementById('stream-view'),
             btnCreate: document.getElementById('btn-create-room'),
             btnJoin: document.getElementById('btn-join-room'),
+            videoContainer: document.getElementById('video-container'),
             video: document.getElementById('main-video'),
             videoOverlay: document.getElementById('video-overlay'),
             overlayIcon: document.getElementById('overlay-icon'),
@@ -251,6 +259,8 @@
             liveIndicator: document.getElementById('stream-live-indicator'),
             viewerCountContainer: document.getElementById('viewer-count-container'),
             viewerCount: document.getElementById('viewer-count'),
+            chatOverlay: document.getElementById('chat-overlay'),
+            chatHeader: document.getElementById('chat-header'),
             chatMessages: document.getElementById('chat-messages'),
             chatInput: document.getElementById('chat-input'),
             btnSendChat: document.getElementById('btn-send-chat'),
@@ -266,6 +276,68 @@
         window.resetApp = resetApp;
         window.sendChatMessage = sendChatMessage;
         window.handleKeyPress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
+
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        function startDrag(e) {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+            
+            isDragging = true;
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+            // Maintain exact height before clearing the bottom constraint
+            if (!DOM.chatOverlay.style.height) {
+                DOM.chatOverlay.style.height = `${DOM.chatOverlay.offsetHeight}px`;
+            }
+
+            const rect = DOM.chatOverlay.getBoundingClientRect();
+            dragOffsetX = clientX - rect.left;
+            dragOffsetY = clientY - rect.top;
+
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchmove', onDrag, { passive: false });
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function onDrag(e) {
+            if (!isDragging) return;
+            if (e.cancelable) e.preventDefault(); // Prevent scroll while dragging on touch
+
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
+            const containerRect = DOM.videoContainer.getBoundingClientRect();
+
+            let newX = clientX - dragOffsetX - containerRect.left;
+            let newY = clientY - dragOffsetY - containerRect.top;
+
+            const maxX = containerRect.width - DOM.chatOverlay.offsetWidth;
+            const maxY = containerRect.height - DOM.chatOverlay.offsetHeight;
+            
+            // Constrain chat box bounds inside the video container
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            DOM.chatOverlay.style.left = `${newX}px`;
+            DOM.chatOverlay.style.top = `${newY}px`;
+            DOM.chatOverlay.style.right = 'auto'; // Clear CSS defaults
+            DOM.chatOverlay.style.bottom = 'auto';
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        DOM.chatHeader.addEventListener('mousedown', startDrag);
+        DOM.chatHeader.addEventListener('touchstart', startDrag, { passive: false });
 
         function showToast(msg) {
             DOM.toastMsg.textContent = msg;
@@ -594,6 +666,12 @@
             DOM.liveIndicator.classList.remove('pulse-green');
             DOM.viewerCountContainer.classList.add('hidden');
             isBroadcaster = false;
+
+            DOM.chatOverlay.style.top = '1rem';
+            DOM.chatOverlay.style.right = '1rem';
+            DOM.chatOverlay.style.left = 'auto';
+            DOM.chatOverlay.style.bottom = '1rem';
+            DOM.chatOverlay.style.height = '';
         }
 
         // Ensure cleanup if browser tab closes
