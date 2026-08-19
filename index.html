@@ -3,445 +3,566 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P2P Streamer (WebRTC)</title>
+    <title>PeerStream (Global Channel)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        
+        /* Custom Scrollbar for Chat */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
         .video-container {
             position: relative;
-            background: #111827; /* Tailwind gray-900 */
+            background: #000;
+            width: 100%;
+            aspect-ratio: 16/9;
             border-radius: 0.5rem;
             overflow: hidden;
-            aspect-ratio: 16/9;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
+        
         video {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Contain is better for screen share to see the full UI */
+            object-fit: contain; /* Prevents cropping, does not flip screen */
             background: #000;
         }
-        .viewer-video {
-             /* No special transform needed anymore since we aren't mirroring */
+
+        .pulse-green {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green-anim 2s infinite;
         }
-        .overlay-label {
-            position: absolute;
-            top: 0.5rem;
-            left: 0.5rem;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            z-index: 10;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #ef4444; /* red by default (offline) */
-        }
-        .status-dot.live {
-            background-color: #22c55e; /* green (live) */
-            box-shadow: 0 0 8px #22c55e;
-            animation: pulse-green 2s infinite;
-        }
-        @keyframes pulse-green {
+        
+        @keyframes pulse-green-anim {
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
 
-        /* Chat styles */
+        .chat-container {
+            height: calc(100vh - 8rem);
+            max-height: 800px;
+        }
+
         #chat-messages {
-            height: 300px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            gap: 0.5rem;
         }
-        .chat-msg { margin-bottom: 0.5rem; word-break: break-word; }
-        .chat-author { font-weight: 600; margin-right: 0.25rem; }
-        .broadcaster-author { color: #a855f7; } /* Purple */
-        .viewer-author { color: #3b82f6; } /* Blue */
-        .system-msg { color: #6b7280; font-style: italic; font-size: 0.875rem; text-align: center; margin: 0.5rem 0;}
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #334155;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col antialiased">
 
-    <nav class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div class="bg-purple-600 text-white p-2 rounded-lg">
+    <!-- Navbar -->
+    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="resetApp()">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg flex items-center justify-center h-10 w-10">
                 <i class="fa-solid fa-satellite-dish"></i>
             </div>
-            <h1 class="text-xl font-bold tracking-tight text-gray-900">PeerStream</h1>
+            <h1 class="text-xl font-bold tracking-tight text-white">PeerStream <span class="text-xs text-indigo-400 font-normal ml-2">Global Channel</span></h1>
         </div>
-        <div class="text-sm font-medium text-gray-500">
-            Local WebRTC P2P Demo
+        <div class="flex items-center gap-4">
+            <div id="auth-status" class="text-xs font-medium text-slate-400 flex items-center gap-2">
+                <i class="fa-solid fa-server"></i> Serverless P2P
+            </div>
         </div>
     </nav>
 
-    <main class="flex-grow container mx-auto px-4 py-6 max-w-7xl">
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-6 w-full max-w-[1600px] flex flex-col">
         
-        <div class="mb-6 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
-            <strong>How this works:</strong> This demo simulates a peer-to-peer connection locally within your browser. It uses <code>getDisplayMedia</code> to capture your screen as the "Broadcaster", then uses the WebRTC <code>RTCPeerConnection</code> API to send that video stream, along with a Data Channel for chat, to a "Viewer" video element on the same page.
+        <!-- LOBBY VIEW -->
+        <div id="lobby-view" class="flex-grow flex flex-col items-center justify-center max-w-3xl mx-auto w-full transition-opacity duration-300">
+            
+            <div class="text-center mb-10">
+                <div class="inline-block bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full text-sm font-semibold mb-4 border border-indigo-500/20">
+                    No IDs Required. One Global Room.
+                </div>
+                <h2 class="text-4xl font-bold text-white mb-4">Click and Stream.</h2>
+                <p class="text-slate-400 text-lg">Broadcast your screen or instantly tune into the active global channel. No databases, purely browser-to-browser.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <!-- Broadcaster Card -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 flex flex-col items-center text-center hover:border-indigo-500 transition-colors">
+                    <div class="h-16 w-16 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Go Live</h3>
+                    <p class="text-slate-400 mb-8 text-sm">Host the global channel. Share your screen with anyone who clicks Tune In.</p>
+                    <button id="btn-create-room" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-display"></i> Share Screen
+                    </button>
+                </div>
+
+                <!-- Viewer Card -->
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 flex flex-col items-center text-center hover:border-emerald-500 transition-colors">
+                    <div class="h-16 w-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-users-viewfinder"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Tune In</h3>
+                    <p class="text-slate-400 mb-6 text-sm">Instantly connect to whoever is currently broadcasting on the global channel.</p>
+                    
+                    <div class="w-full flex flex-col gap-3 mt-auto">
+                        <button id="btn-join-room" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Watch Stream
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-sm text-slate-500 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info"></i> Broadcasts directly to viewers. Chat relays automatically via the Broadcaster.
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- STREAM VIEW -->
+        <div id="stream-view" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 flex-grow">
             
-            <!-- Left Column: Broadcaster Area -->
-            <div class="lg:col-span-1 flex flex-col gap-4">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                    <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-desktop text-purple-600"></i> Screen Share Setup
-                    </h2>
-                    
-                    <div class="video-container mb-4">
-                        <div class="overlay-label">
-                            <div id="broadcaster-status" class="status-dot"></div>
-                            <span>Local Screen</span>
-                        </div>
-                        <video id="localVideo" autoplay playsinline muted></video>
-                    </div>
-                    
-                    <div class="flex flex-col gap-2">
-                        <button id="startScreenBtn" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-display"></i> 1. Share Screen
-                        </button>
-                        <button id="startStreamBtn" disabled class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
-                            <i class="fa-solid fa-broadcast-tower"></i> 2. Go Live (Connect Peers)
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                     <h3 class="font-bold text-gray-700 mb-2">WebRTC Stats</h3>
-                     <div class="text-xs font-mono text-gray-600 bg-gray-50 p-3 rounded-lg overflow-x-auto h-32 overflow-y-auto" id="webrtc-logs">
-                         Ready.<br>
-                     </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Viewer Area & Chat -->
-            <div class="lg:col-span-2 flex flex-col gap-6">
+            <!-- Left: Video Area -->
+            <div class="lg:col-span-3 flex flex-col gap-4">
                 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                     <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-desktop text-blue-600"></i> Viewer Interface
-                    </h2>
-                    
-                    <div class="video-container mb-4">
-                         <div class="overlay-label">
-                            <div id="viewer-status" class="status-dot"></div>
-                            <span>Remote Stream (P2P)</span>
-                        </div>
-                        <video id="remoteVideo" class="viewer-video" autoplay playsinline controls></video>
-                        
-                        <!-- Connecting overlay -->
-                        <div id="connecting-overlay" class="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center text-white z-20 hidden">
-                            <i class="fa-solid fa-circle-notch fa-spin text-4xl mb-3 text-purple-500"></i>
-                            <p class="font-medium">Establishing P2P Connection...</p>
-                        </div>
+                <!-- Status Bar -->
+                <div class="bg-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 border border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <div id="stream-live-indicator" class="h-3 w-3 rounded-full bg-red-500"></div>
+                        <span id="stream-role-label" class="font-semibold text-white">Role: Not Set</span>
                     </div>
+                    
+                    <div id="viewer-count-container" class="hidden flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-lg border border-slate-700">
+                        <i class="fa-solid fa-eye text-slate-400"></i>
+                        <span id="viewer-count" class="font-bold text-indigo-400">0</span>
+                    </div>
+
+                    <button onclick="resetApp()" class="text-sm bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        Leave Stream
+                    </button>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
-                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-xl flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700"><i class="fa-regular fa-comments mr-2"></i>Live Chat (DataChannel)</h3>
-                        <span id="chat-status" class="text-xs font-medium px-2 py-1 bg-gray-200 text-gray-600 rounded-full">Disconnected</span>
-                    </div>
+                <!-- Video Player -->
+                <div class="video-container group">
+                    <video id="main-video" autoplay playsinline class="w-full h-full bg-black"></video>
                     
-                    <div id="chat-messages" class="flex-grow p-4 text-sm">
-                        <div class="system-msg">Welcome to the P2P chat. Waiting for connection...</div>
-                    </div>
-                    
-                    <div class="p-3 border-t border-gray-200 bg-gray-50 rounded-b-xl flex gap-2">
-                         <select id="chat-role" class="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="broadcaster">Broadcaster</option>
-                            <option value="viewer">Viewer</option>
-                        </select>
-                        <input type="text" id="chat-input" disabled placeholder="Type a message..." class="flex-grow border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed" onkeypress="handleKeyPress(event)">
-                        <button id="send-btn" disabled class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onclick="sendMessage()">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
+                    <!-- Overlay Message -->
+                    <div id="video-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-10">
+                        <i id="overlay-icon" class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
+                        <p id="overlay-text" class="text-lg font-medium text-white">Initializing...</p>
                     </div>
                 </div>
-
             </div>
+
+            <!-- Right: Chat Area -->
+            <div class="lg:col-span-1 bg-slate-800 rounded-xl border border-slate-700 flex flex-col chat-container">
+                <!-- Chat Header -->
+                <div class="px-4 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 rounded-t-xl">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-regular fa-comments text-indigo-400"></i> Global Chat
+                    </h3>
+                    <span id="chat-status" class="text-xs font-medium px-2 py-1 bg-slate-700 text-slate-300 rounded-full">
+                        Connecting...
+                    </span>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="flex-grow p-4 text-sm">
+                    <div class="text-center text-slate-500 text-xs italic my-2">Welcome to the P2P Chat Room.</div>
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="p-3 border-t border-slate-700 bg-slate-900 rounded-b-xl flex gap-2">
+                    <input type="text" id="chat-input" disabled placeholder="Waiting for connection..." class="flex-grow bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-50" onkeypress="handleKeyPress(event)">
+                    <button id="btn-send-chat" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onclick="sendChatMessage()">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
         </div>
     </main>
 
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-msg">Notification</span>
+    </div>
+
     <script>
-        // DOM Elements
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        const startScreenBtn = document.getElementById('startScreenBtn');
-        const startStreamBtn = document.getElementById('startStreamBtn');
-        const broadcasterStatus = document.getElementById('broadcaster-status');
-        const viewerStatus = document.getElementById('viewer-status');
-        const connectingOverlay = document.getElementById('connecting-overlay');
-        const logContainer = document.getElementById('webrtc-logs');
+        // Global Constants
+        const GLOBAL_CHANNEL_ID = typeof __app_id !== 'undefined' ? `stream-channel-${__app_id}` : 'peerstream-global-demo-v1';
         
-        // Chat DOM
-        const chatInput = document.getElementById('chat-input');
-        const sendBtn = document.getElementById('send-btn');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatRole = document.getElementById('chat-role');
-        const chatStatus = document.getElementById('chat-status');
+        // PeerJS Configuration
+        const peerConfig = {
+            config: {
+                'iceServers': [
+                    { url: 'stun:stun1.l.google.com:19302' },
+                    { url: 'stun:stun2.l.google.com:19302' }
+                ]
+            },
+            debug: 2 // Log warnings and errors
+        };
 
-        // WebRTC Variables
-        let localStream;
-        let localPeerConnection;  // The Broadcaster
-        let remotePeerConnection; // The Viewer
-        let sendChannel;          // Data channel created by broadcaster
-        let receiveChannel;       // Data channel received by viewer
+        // Global State Variables
+        let peer = null;
+        let localStream = null;
+        let isBroadcaster = false;
+        
+        // Broadcaster State (1-to-Many)
+        let viewerConnections = []; // Array of data connections
+        let viewerCalls = [];       // Array of media calls
+        
+        // Viewer State
+        let hostConnection = null;
 
-        // Helper: Logging
-        function log(msg) {
-            const time = new Date().toLocaleTimeString();
-            logContainer.innerHTML += `[${time}] ${msg}<br>`;
-            logContainer.scrollTop = logContainer.scrollHeight;
-            console.log(`[WebRTC Log] ${msg}`);
+        // DOM Elements
+        const DOM = {
+            lobbyView: document.getElementById('lobby-view'),
+            streamView: document.getElementById('stream-view'),
+            btnCreate: document.getElementById('btn-create-room'),
+            btnJoin: document.getElementById('btn-join-room'),
+            video: document.getElementById('main-video'),
+            videoOverlay: document.getElementById('video-overlay'),
+            overlayIcon: document.getElementById('overlay-icon'),
+            overlayText: document.getElementById('overlay-text'),
+            roleLabel: document.getElementById('stream-role-label'),
+            liveIndicator: document.getElementById('stream-live-indicator'),
+            viewerCountContainer: document.getElementById('viewer-count-container'),
+            viewerCount: document.getElementById('viewer-count'),
+            chatMessages: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input'),
+            btnSendChat: document.getElementById('btn-send-chat'),
+            chatStatus: document.getElementById('chat-status'),
+            toast: document.getElementById('toast'),
+            toastMsg: document.getElementById('toast-msg')
+        };
+
+        // Attach main event listeners
+        DOM.btnCreate.addEventListener('click', startBroadcasting);
+        DOM.btnJoin.addEventListener('click', tuneIn);
+        
+        window.resetApp = resetApp;
+        window.sendChatMessage = sendChatMessage;
+        window.handleKeyPress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
+
+        function showToast(msg) {
+            DOM.toastMsg.textContent = msg;
+            DOM.toast.classList.add('show');
+            setTimeout(() => DOM.toast.classList.remove('show'), 3000);
         }
 
-        // Helper: Append Chat Message
-        function appendChatMessage(role, text) {
+        function setVideoOverlay(iconClass, text, show = true) {
+            if (show) {
+                DOM.videoOverlay.classList.remove('hidden');
+                DOM.overlayIcon.className = `fa-solid text-4xl mb-4 ${iconClass}`;
+                DOM.overlayText.textContent = text;
+            } else {
+                DOM.videoOverlay.classList.add('hidden');
+            }
+        }
+
+        function updateViewerCount() {
+            if (isBroadcaster) {
+                DOM.viewerCountContainer.classList.remove('hidden');
+                DOM.viewerCount.textContent = viewerConnections.length;
+            }
+        }
+
+        function appendChatMessage(sender, text, isSystem = false) {
             const msgDiv = document.createElement('div');
-            msgDiv.className = 'chat-msg';
-            
-            const authorSpan = document.createElement('span');
-            authorSpan.className = `chat-author ${role === 'broadcaster' ? 'broadcaster-author' : 'viewer-author'}`;
-            authorSpan.textContent = role === 'broadcaster' ? 'Broadcaster:' : 'Viewer:';
-            
-            const textSpan = document.createElement('span');
-            textSpan.textContent = text;
-            
-            msgDiv.appendChild(authorSpan);
-            msgDiv.appendChild(textSpan);
-            chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function appendSystemMessage(text) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'system-msg';
-            msgDiv.textContent = text;
-            chatMessages.appendChild(msgDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        startScreenBtn.addEventListener('click', async () => {
-            try {
-                log('Requesting screen share access...');
-                // Use getDisplayMedia to prompt the user to select a screen/window to share
-                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                localVideo.srcObject = localStream;
-                startScreenBtn.disabled = true;
-                startScreenBtn.innerHTML = '<i class="fa-solid fa-check"></i> Screen Shared';
-                startScreenBtn.classList.replace('bg-gray-900', 'bg-green-600');
-                startScreenBtn.classList.replace('hover:bg-gray-800', 'hover:bg-green-700');
+            if (isSystem) {
+                msgDiv.className = 'text-center text-slate-500 text-xs italic my-2';
+                msgDiv.textContent = text;
+            } else {
+                const isMe = sender === 'You';
+                const isHost = sender === 'Broadcaster';
+                msgDiv.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-2`;
                 
-                broadcasterStatus.classList.add('live');
-                startStreamBtn.disabled = false;
-                log('Local screen stream obtained successfully.');
+                let bubbleClass = isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-700 text-slate-200 rounded-tl-none';
+                if (isHost && !isMe) bubbleClass = 'bg-rose-600 text-white rounded-tl-none'; // Host messages are red for viewers
 
-                // Handle the user clicking "Stop Sharing" on the native browser banner
+                const bubble = document.createElement('div');
+                bubble.className = `px-3 py-2 rounded-lg max-w-[85%] text-sm ${bubbleClass}`;
+                bubble.textContent = text;
+                
+                const label = document.createElement('span');
+                label.className = `text-[10px] mt-1 px-1 font-semibold ${isHost ? 'text-rose-400' : 'text-slate-500'}`;
+                label.textContent = sender;
+                
+                msgDiv.appendChild(bubble);
+                msgDiv.appendChild(label);
+            }
+            
+            DOM.chatMessages.appendChild(msgDiv);
+            DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
+        }
+
+        function updateChatStatus(connected) {
+            if (connected) {
+                DOM.chatStatus.textContent = 'Connected';
+                DOM.chatStatus.className = 'text-xs font-medium px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full';
+                DOM.chatInput.disabled = false;
+                DOM.btnSendChat.disabled = false;
+                DOM.chatInput.placeholder = "Type a message...";
+            } else {
+                DOM.chatStatus.textContent = 'Offline';
+                DOM.chatStatus.className = 'text-xs font-medium px-2 py-1 bg-red-500/20 text-red-400 rounded-full';
+                DOM.chatInput.disabled = true;
+                DOM.btnSendChat.disabled = true;
+                DOM.chatInput.placeholder = "Not connected...";
+            }
+        }
+
+        async function startBroadcasting() {
+            try {
+                // 1. Get Screen Stream
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                DOM.video.srcObject = localStream;
+                DOM.video.muted = true; // Mute local playback
+                
+                // 2. Switch UI
+                isBroadcaster = true;
+                DOM.lobbyView.classList.add('hidden');
+                DOM.streamView.classList.remove('hidden');
+                DOM.roleLabel.innerHTML = '<i class="fa-solid fa-tower-broadcast mr-1"></i> Broadcaster';
+                setVideoOverlay('fa-circle-notch fa-spin text-indigo-500', 'Registering Channel...');
+
+                // 3. Initialize Peer with Fixed ID
+                // The Broadcaster claims the GLOBAL_CHANNEL_ID
+                peer = new Peer(GLOBAL_CHANNEL_ID, peerConfig);
+
+                peer.on('open', (id) => {
+                    console.log('Broadcaster registered as:', id);
+                    setVideoOverlay('', '', false); // Hide overlay
+                    DOM.liveIndicator.classList.replace('bg-red-500', 'bg-emerald-500');
+                    DOM.liveIndicator.classList.add('pulse-green');
+                    updateChatStatus(true);
+                    appendChatMessage('System', 'You are now live on the Global Channel!', true);
+                    updateViewerCount();
+                });
+
+                // Listen for native stop sharing button
                 localStream.getVideoTracks()[0].onended = () => {
-                     log('Screen share ended by user.');
-                     startScreenBtn.disabled = false;
-                     startScreenBtn.innerHTML = '<i class="fa-solid fa-display"></i> 1. Share Screen';
-                     startScreenBtn.classList.replace('bg-green-600', 'bg-gray-900');
-                     startScreenBtn.classList.replace('hover:bg-green-700', 'hover:bg-gray-800');
-                     broadcasterStatus.classList.remove('live');
-                     startStreamBtn.disabled = true;
-                     localVideo.srcObject = null;
-                     localStream = null;
+                    appendChatMessage('System', 'Screen share stopped.', true);
+                    resetApp();
                 };
 
+                peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    if (err.type === 'unavailable-id') {
+                        alert("Someone else is currently broadcasting on the global channel!");
+                        resetApp();
+                    }
+                });
+
+                // 4. Handle incoming Viewer connections
+                peer.on('connection', (conn) => {
+                    console.log('Viewer connected:', conn.peer);
+                    viewerConnections.push(conn);
+                    updateViewerCount();
+                    
+                    conn.on('open', () => {
+                        // Welcome the viewer
+                        conn.send({ type: 'system', text: 'Connected to stream chat.' });
+                        
+                        // Broadcast that someone joined (optional, can get spammy)
+                        // broadcastChat('System', 'A viewer joined.', true);
+                    });
+
+                    conn.on('data', (data) => {
+                        // Received a chat message from a viewer
+                        if (data.type === 'chat') {
+                            const senderName = `Viewer-${conn.peer.substring(0,4)}`;
+                            // Show locally
+                            appendChatMessage(senderName, data.text);
+                            // Relay to ALL other viewers
+                            broadcastChat(senderName, data.text, false, conn.peer);
+                        }
+                    });
+
+                    conn.on('close', () => {
+                        console.log('Viewer disconnected:', conn.peer);
+                        viewerConnections = viewerConnections.filter(v => v.peer !== conn.peer);
+                        updateViewerCount();
+                    });
+
+                    // 5. Instantly CALL the viewer back with our video stream!
+                    // This bypasses the need for the viewer to approve camera permissions to call us.
+                    const call = peer.call(conn.peer, localStream);
+                    viewerCalls.push(call);
+                });
+
             } catch (error) {
-                log(`<span style="color:red">Error accessing screen: ${error.message}</span>`);
-                alert('Could not access screen share. Please ensure permissions are granted and the prompt is not dismissed.');
-            }
-        });
-
-        startStreamBtn.addEventListener('click', async () => {
-            if (!localStream) {
-                alert('Please share your screen first.');
-                return;
-            }
-
-            startStreamBtn.disabled = true;
-            connectingOverlay.classList.remove('hidden');
-            log('Starting connection process...');
-
-            // Configuration for WebRTC (usually contains STUN/TURN servers for real WAN connections)
-            // For local P2P, empty configuration is fine.
-            const servers = null; 
-
-            // 1. Create Peer Connections
-            localPeerConnection = new RTCPeerConnection(servers);
-            log('Created local peer connection object (Broadcaster)');
-            
-            remotePeerConnection = new RTCPeerConnection(servers);
-            log('Created remote peer connection object (Viewer)');
-
-            // 2. Setup ICE Candidate handling (The "address book" exchange)
-            // When local peer finds a candidate, give it to the remote peer
-            localPeerConnection.onicecandidate = e => {
-                if (e.candidate) {
-                    remotePeerConnection.addIceCandidate(e.candidate)
-                        .then(() => log('Remote peer added ICE Candidate successfully'))
-                        .catch(err => log(`Failed to add ICE candidate: ${err}`));
+                console.error('Error starting broadcast:', error);
+                if (error.name !== 'NotAllowedError') {
+                    alert("Could not start broadcast. Check permissions.");
                 }
-            };
+                resetApp();
+            }
+        }
 
-            // When remote peer finds a candidate, give it to the local peer
-            remotePeerConnection.onicecandidate = e => {
-                if (e.candidate) {
-                    localPeerConnection.addIceCandidate(e.candidate)
-                        .then(() => log('Local peer added ICE Candidate successfully'))
-                        .catch(err => log(`Failed to add ICE candidate: ${err}`));
+        // Relay chat to multiple viewers
+        function broadcastChat(senderName, text, isSystem = false, excludePeerId = null) {
+            const payload = { type: isSystem ? 'system' : 'chat', senderName, text };
+            viewerConnections.forEach(conn => {
+                if (conn.open && conn.peer !== excludePeerId) {
+                    conn.send(payload);
                 }
-            };
-
-            // 3. Add local tracks to the local peer connection
-            localStream.getTracks().forEach(track => {
-                localPeerConnection.addTrack(track, localStream);
             });
-            log('Added local stream tracks to local peer connection');
+        }
 
-            // 4. Handle incoming stream on the remote peer connection
-            remotePeerConnection.ontrack = e => {
-                if (remoteVideo.srcObject !== e.streams[0]) {
-                    remoteVideo.srcObject = e.streams[0];
-                    log('Received remote track, attaching to Viewer video element');
-                    connectingOverlay.classList.add('hidden');
-                    viewerStatus.classList.add('live');
-                    startStreamBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Streaming Live';
-                    startStreamBtn.classList.replace('bg-purple-600', 'bg-green-600');
+        function tuneIn() {
+            // Switch UI
+            isBroadcaster = false;
+            DOM.lobbyView.classList.add('hidden');
+            DOM.streamView.classList.remove('hidden');
+            DOM.roleLabel.innerHTML = '<i class="fa-solid fa-users-viewfinder mr-1"></i> Viewer';
+            setVideoOverlay('fa-circle-notch fa-spin text-emerald-500', 'Finding Broadcast...');
+
+            // 1. Create a Peer with a random automatic ID
+            peer = new Peer(peerConfig);
+
+            peer.on('open', (myId) => {
+                console.log('Viewer registered as:', myId);
+                setVideoOverlay('fa-circle-notch fa-spin text-emerald-500', 'Tuning in...');
+                
+                // 2. Connect to the Broadcaster's fixed ID to establish data/chat channel
+                hostConnection = peer.connect(GLOBAL_CHANNEL_ID);
+
+                hostConnection.on('open', () => {
+                    console.log('Connected to broadcaster chat.');
+                    updateChatStatus(true);
+                    DOM.liveIndicator.classList.replace('bg-red-500', 'bg-emerald-500');
+                    DOM.liveIndicator.classList.add('pulse-green');
+                });
+
+                hostConnection.on('data', (data) => {
+                    if (data.type === 'system') {
+                        appendChatMessage('System', data.text, true);
+                    } else if (data.type === 'chat') {
+                        appendChatMessage(data.senderName, data.text);
+                    }
+                });
+
+                hostConnection.on('close', () => {
+                    console.log('Broadcaster closed connection.');
+                    setVideoOverlay('fa-video-slash text-slate-500', 'Broadcast Ended');
+                    updateChatStatus(false);
+                    DOM.liveIndicator.classList.replace('bg-emerald-500', 'bg-red-500');
+                    DOM.liveIndicator.classList.remove('pulse-green');
+                    appendChatMessage('System', 'Host disconnected.', true);
+                });
+            });
+
+            // 3. Answer incoming video call from the Broadcaster
+            peer.on('call', (call) => {
+                console.log('Receiving video from broadcaster');
+                // Answer without sending a stream back
+                call.answer(); 
+                
+                call.on('stream', (remoteStream) => {
+                    // Display the stream!
+                    DOM.video.srcObject = remoteStream;
+                    DOM.video.muted = false; // Unmute so we hear the host
+                    setVideoOverlay('', '', false);
+                });
+                
+                call.on('close', () => {
+                    DOM.video.srcObject = null;
+                    setVideoOverlay('fa-video-slash text-slate-500', 'Broadcast Ended');
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.error('Viewer Peer error:', err);
+                if (err.type === 'peer-unavailable') {
+                    setVideoOverlay('fa-tower-broadcast text-slate-500', 'No one is currently live.');
+                    setTimeout(resetApp, 3000);
                 }
-            };
-
-            // 5. Setup Data Channel for Chat
-            sendChannel = localPeerConnection.createDataChannel('sendDataChannel');
-            log('Created send data channel (Broadcaster)');
-            
-            sendChannel.onopen = () => {
-                log('Send channel state is: ' + sendChannel.readyState);
-                enableChatInterface();
-            };
-            sendChannel.onclose = () => log('Send channel state is: ' + sendChannel.readyState);
-
-            remotePeerConnection.ondatachannel = receiveChannelCallback;
-
-            try {
-                // 6. Create Offer (Broadcaster)
-                log('Creating offer...');
-                const offer = await localPeerConnection.createOffer();
-                
-                // 7. Set Local Description (Broadcaster)
-                await localPeerConnection.setLocalDescription(offer);
-                log('Local description set (Broadcaster)');
-
-                // --- In a real app, signaling server sends offer to viewer here ---
-                
-                // 8. Set Remote Description (Viewer)
-                await remotePeerConnection.setRemoteDescription(offer);
-                log('Remote description set (Viewer)');
-
-                // 9. Create Answer (Viewer)
-                log('Creating answer...');
-                const answer = await remotePeerConnection.createAnswer();
-
-                // 10. Set Local Description (Viewer)
-                await remotePeerConnection.setLocalDescription(answer);
-                log('Local description set (Viewer)');
-
-                // --- In a real app, signaling server sends answer back to broadcaster here ---
-
-                // 11. Set Remote Description (Broadcaster)
-                await localPeerConnection.setRemoteDescription(answer);
-                log('Remote description set (Broadcaster) - Handshake complete');
-
-            } catch (e) {
-                log(`<span style="color:red">Failed to create session description: ${e.toString()}</span>`);
-                connectingOverlay.classList.add('hidden');
-                startStreamBtn.disabled = false;
-            }
-        });
-
-        function receiveChannelCallback(event) {
-            log('Receive Channel Callback');
-            receiveChannel = event.channel;
-            receiveChannel.onmessage = handleReceiveMessage;
-            receiveChannel.onopen = () => {
-                log('Receive channel state is: ' + receiveChannel.readyState);
-                enableChatInterface();
-            };
-            receiveChannel.onclose = () => log('Receive channel state is: ' + receiveChannel.readyState);
+            });
         }
 
-        function handleReceiveMessage(event) {
-            // Because we are simulating both sides, we need to know who sent it
-            // We pass a JSON object {role: '...', text: '...'}
-            try {
-                const data = JSON.parse(event.data);
-                appendChatMessage(data.role, data.text);
-            } catch (e) {
-                console.error("Failed to parse message", e);
-            }
-        }
+        function sendChatMessage() {
+            const input = DOM.chatInput.value.trim();
+            if (!input) return;
 
-        function enableChatInterface() {
-            chatInput.disabled = false;
-            sendBtn.disabled = false;
-            chatStatus.textContent = 'Connected (P2P)';
-            chatStatus.classList.replace('bg-gray-200', 'bg-green-100');
-            chatStatus.classList.replace('text-gray-600', 'text-green-700');
-            appendSystemMessage('Data channel established. P2P Chat is live.');
-        }
-
-        window.sendMessage = function() {
-            const text = chatInput.value.trim();
-            if (!text) return;
-            
-            const role = chatRole.value; // 'broadcaster' or 'viewer'
-            const messageObj = { role: role, text: text };
-            const messageString = JSON.stringify(messageObj);
-
-            // In a real app, broadcaster sends via sendChannel, viewer via receiveChannel
-            // For this local demo, we just route it through whichever is open to simulate P2P
-            if (role === 'broadcaster' && sendChannel && sendChannel.readyState === 'open') {
-                 sendChannel.send(messageString);
-                 appendChatMessage(role, text); // Echo locally
-            } else if (role === 'viewer' && receiveChannel && receiveChannel.readyState === 'open') {
-                 receiveChannel.send(messageString);
-                 appendChatMessage(role, text); // Echo locally
+            if (isBroadcaster) {
+                // Send to everyone
+                appendChatMessage('You', input);
+                broadcastChat('Broadcaster', input);
             } else {
-                 alert('Chat connection is not open yet.');
+                // Send to host (Host will relay)
+                if (hostConnection && hostConnection.open) {
+                    hostConnection.send({ type: 'chat', text: input });
+                    appendChatMessage('You', input);
+                }
             }
+            DOM.chatInput.value = '';
+        }
+
+        function resetApp() {
+            console.log("Resetting application...");
             
-            chatInput.value = '';
-            chatInput.focus();
-        };
-
-        window.handleKeyPress = function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+            // Cleanup Streams
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
             }
-        };
+            DOM.video.srcObject = null;
 
-        // Handle cleanup on close
+            // Cleanup Connections
+            if (isBroadcaster) {
+                viewerConnections.forEach(c => c.close());
+                viewerCalls.forEach(c => c.close());
+                viewerConnections = [];
+                viewerCalls = [];
+            } else {
+                if (hostConnection) hostConnection.close();
+                hostConnection = null;
+            }
+
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+
+            // Reset UI
+            DOM.streamView.classList.add('hidden');
+            DOM.lobbyView.classList.remove('hidden');
+            DOM.chatMessages.innerHTML = '<div class="text-center text-slate-500 text-xs italic my-2">Welcome to the P2P Chat Room.</div>';
+            updateChatStatus(false);
+            DOM.liveIndicator.classList.replace('bg-emerald-500', 'bg-red-500');
+            DOM.liveIndicator.classList.remove('pulse-green');
+            DOM.viewerCountContainer.classList.add('hidden');
+            isBroadcaster = false;
+        }
+
+        // Ensure cleanup if browser tab closes
         window.addEventListener('beforeunload', () => {
-            if (localPeerConnection) localPeerConnection.close();
-            if (remotePeerConnection) remotePeerConnection.close();
+            if (peer) peer.destroy();
         });
-
     </script>
 </body>
 </html>
