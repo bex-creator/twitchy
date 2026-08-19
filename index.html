@@ -3,248 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeerStream (Global Channel)</title>
+    <title>PeerStream - WebRTC P2P Live Streaming</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- PeerJS WebRTC Library -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
-        /* Custom Scrollbar for Chat */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-        .video-container {
-            position: relative;
-            background: #000;
-            width: 100%;
-            aspect-ratio: 16/9;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0e14;
+            color: #f1f5f9;
+            overflow-x: hidden;
         }
-        
+
+        /* Video element - keep standard aspect ratio & avoid mirroring text */
         video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Prevents cropping, does not flip screen */
-            background: #000;
+            object-fit: contain;
+            transform: scaleX(1);
         }
 
-        .pulse-green {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            animation: pulse-green-anim 2s infinite;
-        }
-        
-        @keyframes pulse-green-anim {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        .chat-overlay {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            bottom: 1rem;
-            width: 320px;
-            max-width: calc(100% - 2rem);
-            background-color: transparent;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            z-index: 20;
-        }
-
+        /* Clear, Transparent Twitch-Style Chat Overlay */
         .chat-text-shadow {
-            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.9);
+            text-shadow: 
+                -1px -1px 0 #000,  
+                 1px -1px 0 #000,
+                -1px  1px 0 #000,
+                 1px  1px 0 #000,
+                 0px  2px 4px rgba(0,0,0,0.9);
         }
 
-        #chat-messages {
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+        /* Custom Scrollbar for Chat */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
         }
 
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background-color: #334155;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        /* Pulsing Live Badge Animation */
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        .toast.show { transform: translateX(-50%) translateY(0); }
+        .pulse-live {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+
+        /* Nexus Gift Visual Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in { 
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+
+        /* Floating Coin Earned Animation */
+        @keyframes floatCoinUp {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            50% { transform: translateY(-40px) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-80px) scale(1); opacity: 0; }
+        }
+        .animate-float-coin {
+            animation: floatCoinUp 1.8s ease-out forwards;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 select-none">
 
-    <!-- Navbar -->
-    <nav class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="resetApp()">
-            <div class="bg-indigo-600 text-white p-2 rounded-lg flex items-center justify-center h-10 w-10">
-                <i class="fa-solid fa-satellite-dish"></i>
+    <!-- Application Top Bar -->
+    <header class="h-14 bg-slate-900/90 border-b border-slate-800/80 px-4 flex items-center justify-between z-30 shrink-0 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <i class="fa-solid fa-play text-white text-xs"></i>
             </div>
-            <h1 class="text-xl font-bold tracking-tight text-white">PeerStream <span class="text-xs text-indigo-400 font-normal ml-2">Global Channel</span></h1>
+            <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-purple-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent">
+                PeerStream
+            </span>
+            <span class="hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700/50">
+                P2P Mesh
+            </span>
         </div>
-        <div class="flex items-center gap-4">
-            <div id="auth-status" class="text-xs font-medium text-slate-400 flex items-center gap-2">
-                <i class="fa-solid fa-server"></i> Serverless P2P
-            </div>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-6 w-full max-w-[1600px] flex flex-col">
-        
-        <!-- LOBBY VIEW -->
-        <div id="lobby-view" class="flex-grow flex flex-col items-center justify-center max-w-3xl mx-auto w-full transition-opacity duration-300">
-            
-            <div class="text-center mb-10">
-                <div class="inline-block bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full text-sm font-semibold mb-4 border border-indigo-500/20">
-                    No IDs Required. One Global Room.
+        <!-- Connection Status Indicator -->
+        <div id="connection-status" class="flex items-center gap-2 bg-slate-900/80 border border-slate-800 px-3 py-1 rounded-full text-xs font-medium text-slate-400">
+            <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+            <span id="status-text">Lobby Ready</span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow relative flex overflow-hidden">
+
+        <!-- LOBBY VIEW (Default) -->
+        <div id="lobby-view" class="w-full h-full flex flex-col items-center justify-center p-6 text-center z-20 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+            <div class="max-w-md w-full bg-slate-900/80 border border-slate-800/80 rounded-2xl p-8 shadow-2xl backdrop-blur-xl">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto mb-5 text-2xl">
+                    <i class="fa-solid fa-tower-broadcast"></i>
                 </div>
-                <h2 class="text-4xl font-bold text-white mb-4">Click and Stream.</h2>
-                <p class="text-slate-400 text-lg">Broadcast your screen or instantly tune into the active global channel. No databases, purely browser-to-browser.</p>
-            </div>
+                <h1 class="text-2xl font-bold text-white mb-2">P2P Networked Live</h1>
+                <p class="text-sm text-slate-400 mb-8 leading-relaxed">
+                    Broadcast your screen and audio directly browser-to-browser with ultra low latency and zero server reliance.
+                </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                <!-- Broadcaster Card -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 flex flex-col items-center text-center hover:border-indigo-500 transition-colors">
-                    <div class="h-16 w-16 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center text-2xl mb-6">
-                        <i class="fa-solid fa-tower-broadcast"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Go Live</h3>
-                    <p class="text-slate-400 mb-8 text-sm">Host the global channel. Share your screen and microphone with anyone who clicks Tune In.</p>
-                    <button id="btn-create-room" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-display"></i> Share Screen & Mic
+                <div class="space-y-4">
+                    <!-- Start Broadcast Button -->
+                    <button id="btn-create-room" onclick="startBroadcast()" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-indigo-600/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-desktop"></i>
+                        Start Screen Stream
+                    </button>
+
+                    <!-- Tune In Button -->
+                    <button id="btn-join-room" onclick="tuneIn()" class="w-full py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700/80 text-white font-semibold transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-eye text-emerald-400"></i>
+                        Tune Into Stream
                     </button>
                 </div>
 
-                <!-- Viewer Card -->
-                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 flex flex-col items-center text-center hover:border-emerald-500 transition-colors">
-                    <div class="h-16 w-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mb-6">
-                        <i class="fa-solid fa-users-viewfinder"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Tune In</h3>
-                    <p class="text-slate-400 mb-6 text-sm">Instantly connect to whoever is currently broadcasting on the global channel.</p>
-                    
-                    <div class="w-full flex flex-col gap-3 mt-auto">
-                        <button id="btn-join-room" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-play"></i> Watch Stream
-                        </button>
-                    </div>
+                <div class="mt-8 pt-6 border-t border-slate-800/80 text-xs text-slate-500 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-slate-400"></i> Direct browser-to-browser WebRTC encrypted
                 </div>
-            </div>
-            
-            <div class="mt-8 text-sm text-slate-500 flex items-center gap-2">
-                <i class="fa-solid fa-circle-info"></i> Broadcasts directly to viewers. Chat relays automatically via the Broadcaster.
             </div>
         </div>
 
-        <!-- STREAM VIEW -->
-        <div id="stream-view" class="hidden flex-col gap-4 flex-grow w-full max-w-6xl mx-auto">
-            
-            <div class="bg-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4 border border-slate-700 w-full">
-                <div class="flex items-center gap-3">
-                    <div id="stream-live-indicator" class="h-3 w-3 rounded-full bg-red-500"></div>
-                    <span id="stream-role-label" class="font-semibold text-white">Role: Not Set</span>
-                </div>
-                
-                <div id="viewer-count-container" class="hidden flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-lg border border-slate-700">
-                    <i class="fa-solid fa-eye text-slate-400"></i>
-                    <span id="viewer-count" class="font-bold text-indigo-400">0</span>
+        <!-- STREAM VIEW (Active Broadcast or Viewing) -->
+        <div id="stream-view" class="hidden w-full h-full relative flex flex-col bg-black">
+
+            <!-- STREAM HUD OVERLAY TOP BAR -->
+            <div class="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-20 bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none">
+                <div class="flex items-center gap-3 pointer-events-auto">
+                    <!-- Stream Status Indicator -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-white/10 backdrop-blur-md">
+                        <span id="stream-live-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                        <span id="stream-role-label" class="text-xs font-bold uppercase tracking-wider text-white">Stream</span>
+                    </div>
+
+                    <!-- Active Viewers Count -->
+                    <div id="viewer-count-container" class="hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 border border-white/10 backdrop-blur-md text-xs font-semibold text-slate-200">
+                        <i class="fa-solid fa-user-group text-indigo-400 text-xs"></i>
+                        <span id="viewer-count">0</span>
+                    </div>
                 </div>
 
-                <button onclick="resetApp()" class="text-sm bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition-colors">
-                    Leave Stream
+                <!-- Leave / Stop Stream Button -->
+                <button onclick="resetApp()" class="pointer-events-auto px-3.5 py-1.5 rounded-lg bg-red-600/80 hover:bg-red-600 text-white font-semibold text-xs transition-colors border border-red-500/30 flex items-center gap-1.5 backdrop-blur-md shadow-lg">
+                    <i class="fa-solid fa-right-from-bracket"></i> Leave
                 </button>
             </div>
 
-            <div id="video-container" class="video-container group w-full relative">
-                <video id="main-video" autoplay playsinline class="w-full h-full bg-black"></video>
-                
-                <!-- Overlay Message -->
-                <div id="video-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-10">
-                    <i id="overlay-icon" class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-4"></i>
-                    <p id="overlay-text" class="text-lg font-medium text-white">Initializing...</p>
+            <!-- STREAM VIDEO PLAYER CONTAINER -->
+            <div id="video-container" class="relative flex-grow w-full h-full flex items-center justify-center bg-black overflow-hidden">
+                <video id="main-video" autoplay playsinline class="w-full h-full max-h-full max-w-full"></video>
+
+                <!-- Overlay placeholder when searching or offline -->
+                <div id="video-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 text-slate-400 z-10 gap-3">
+                    <i id="overlay-icon" class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500"></i>
+                    <p id="overlay-text" class="text-sm font-medium">Connecting to stream network...</p>
                 </div>
 
-                <!-- Floating Chat Overlay -->
-                <div id="chat-overlay" class="chat-overlay">
-                    <!-- Chat Header -->
-                    <div id="chat-header" class="px-4 py-2 flex justify-between items-center cursor-move transition-colors group" title="Drag to move chat">
-                        <h3 class="font-bold text-white/50 group-hover:text-white transition-colors flex items-center gap-2 text-sm pointer-events-none chat-text-shadow">
-                            <i class="fa-solid fa-grip-vertical"></i> Chat
-                        </h3>
-                        <span id="chat-status" class="text-[10px] font-medium px-2 py-0.5 bg-black/60 text-slate-300 rounded-full chat-text-shadow">
-                            Connecting...
+                <!-- DRAGGABLE FLOATING CLEAR CHAT OVERLAY -->
+                <div id="chat-overlay" class="absolute top-4 right-4 w-80 max-w-[90vw] h-[480px] max-h-[75vh] flex flex-col z-30 pointer-events-none transition-all duration-75">
+                    
+                    <!-- Chat Draggable Header Handle -->
+                    <div id="chat-header" class="px-3 py-2 bg-slate-900/60 hover:bg-slate-900/80 border border-white/10 rounded-t-xl backdrop-blur-md flex items-center justify-between pointer-events-auto cursor-grab active:cursor-grabbing text-slate-300">
+                        <div class="flex items-center gap-2 text-xs font-bold text-white chat-text-shadow">
+                            <i class="fa-solid fa-grip-lines text-slate-400"></i>
+                            <i class="fa-regular fa-comments text-indigo-400"></i> Live Stream Chat
+                        </div>
+                        <span id="chat-status" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">
+                            Connected
                         </span>
                     </div>
-                    
-                    <!-- Chat Messages -->
-                    <div id="chat-messages" class="flex-grow p-3 text-sm scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent">
-                        <div class="text-center text-white/80 text-xs italic my-2 chat-text-shadow">Welcome to the P2P Chat Room.</div>
+
+                    <!-- Chat Messages Log (Transparent Twitch Text Styling) -->
+                    <div id="chat-messages" class="flex-grow p-3 text-sm overflow-y-auto scrollbar-thin flex flex-col justify-end gap-1.5 pointer-events-auto bg-gradient-to-b from-transparent via-black/20 to-black/40 border-x border-white/5">
+                        <div class="text-center text-slate-300 text-xs italic my-2 chat-text-shadow bg-black/30 py-1 px-2 rounded-lg border border-white/5">
+                            Welcome to the PeerStream P2P Chat Room!
+                        </div>
                     </div>
-                    
-                    <!-- Chat Input -->
-                    <div class="p-2 flex gap-2">
-                        <input type="text" id="chat-input" disabled placeholder="Waiting..." class="flex-grow bg-black/40 border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/50 focus:bg-black/60 disabled:opacity-50 placeholder-white/50 backdrop-blur-sm shadow-lg" onkeypress="handleKeyPress(event)">
-                        <button id="btn-send-chat" disabled class="bg-indigo-600/80 hover:bg-indigo-500 text-white rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm shadow-lg" onclick="sendChatMessage()">
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
+
+                    <!-- Watch & Earn Reward Status Widget (For Viewers) -->
+                    <div id="watch-reward-container" class="hidden px-3 py-1.5 bg-indigo-950/70 border-t border-indigo-500/30 backdrop-blur-md flex flex-col gap-1 pointer-events-auto">
+                        <div class="flex justify-between items-center text-[11px] font-semibold text-indigo-200 chat-text-shadow">
+                            <span class="flex items-center gap-1">
+                                <i class="fa-solid fa-stopwatch text-indigo-400 animate-pulse"></i> Watch & Earn
+                            </span>
+                            <span id="watch-reward-status" class="text-yellow-400 font-bold">+10 NC in 15s</span>
+                        </div>
+                        <div class="w-full bg-slate-950/80 rounded-full h-1.5 overflow-hidden border border-indigo-500/30">
+                            <div id="watch-reward-progress" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-yellow-400 h-full w-0 transition-all duration-1000 ease-linear"></div>
+                        </div>
+                    </div>
+
+                    <!-- Nexus Wallet & Store Integration Bar -->
+                    <div id="nexus-integration-ui" class="px-2 pt-1 pb-2 pointer-events-auto border-t border-white/10 bg-slate-950/70 backdrop-blur-md">
+                        <!-- Unlinked State -->
+                        <div id="nexus-login-state" class="flex items-center justify-between text-xs py-1">
+                            <span class="text-slate-300 text-[11px] font-medium flex items-center gap-1 chat-text-shadow">
+                                <i class="fa-solid fa-wallet text-yellow-400"></i> Nexus Store
+                            </span>
+                            <button id="btn-nexus-connect" onclick="connectNexusWallet()" class="px-2.5 py-1 rounded bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/40 font-bold text-[10px] transition-colors">
+                                Link Wallet
+                            </button>
+                        </div>
+
+                        <!-- Linked Wallet State -->
+                        <div id="nexus-wallet-state" class="hidden flex items-center justify-between text-xs py-1">
+                            <div class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-coins text-yellow-400 text-sm"></i>
+                                <span id="nexus-balance" class="font-extrabold text-yellow-300 chat-text-shadow">0</span>
+                                <span class="text-[10px] text-yellow-400/80 font-bold">NC</span>
+                            </div>
+
+                            <!-- Gift Buttons -->
+                            <div class="flex items-center gap-1">
+                                <button onclick="sendNexusGift(50)" class="px-2 py-0.5 rounded bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold text-[10px] shadow transition-all">
+                                    🎁 50 NC
+                                </button>
+                                <button onclick="sendNexusGift(100)" class="px-2 py-0.5 rounded bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-extrabold text-[10px] shadow transition-all">
+                                    💎 100 NC
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Input Field Overlay -->
+                    <div class="p-2 bg-slate-950/80 border-t border-white/10 rounded-b-xl backdrop-blur-md flex items-center gap-2 pointer-events-auto">
+                        <input id="chat-input" type="text" placeholder="Send a message..." onkeydown="if(event.key === 'Enter') sendChatMessage()" class="flex-grow px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500/80 transition-all">
+                        <button id="btn-send-chat" onclick="sendChatMessage()" class="w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center text-xs transition-colors shrink-0">
+                            <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <!-- Custom Toast Notification -->
-    <div id="toast" class="toast">
+    <!-- Global Toast Notification Banner -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs font-semibold shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-50 flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-indigo-400"></i>
         <span id="toast-msg">Notification</span>
     </div>
 
     <script>
-        // Global Constants
-        const GLOBAL_CHANNEL_ID = typeof __app_id !== 'undefined' ? `stream-channel-${__app_id}` : 'peerstream-global-demo-v1';
-        
-        // PeerJS Configuration
+        // Global Network Configuration
+        const GLOBAL_CHANNEL_ID = "peerstream-global-live-host";
         const peerConfig = {
             config: {
-                'iceServers': [
-                    { url: 'stun:stun1.l.google.com:19302' },
-                    { url: 'stun:stun2.l.google.com:19302' }
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
                 ]
-            },
-            debug: 2 // Log warnings and errors
+            }
         };
 
-        // Global State Variables
+        // Nexus Backend Integration Config
+        const NEXUS_CONFIG = {
+            useRealAPI: false, // Set to true to connect to a real Node.js/Express backend server
+            baseUrl: "http://localhost:3000/v1" 
+        };
+
+        // Application State
         let peer = null;
         let localStream = null;
         let isBroadcaster = false;
         
-        // Broadcaster State (1-to-Many)
-        let viewerConnections = []; // Array of data connections
-        let viewerCalls = [];       // Array of media calls
+        // Broadcaster State (1-to-Many Relay Mesh)
+        let viewerConnections = []; 
+        let viewerCalls = [];       
         
         // Viewer State
         let hostConnection = null;
+        let nexusBalance = 0; 
+        let isNexusLinked = false;
+        let isProcessingGift = false;
+        let nexusAuthToken = null;
 
-        // DOM Elements
+        // Watch to Earn Rewards State
+        let watchRewardTimer = null;
+        let watchTimeSeconds = 0;
+        const REWARD_CYCLE_SECONDS = 15; 
+        const REWARD_COIN_AMOUNT = 10;   
+        let earnedSessionCoins = 0;
+
+        // DOM Element Registry
         const DOM = {
             lobbyView: document.getElementById('lobby-view'),
             streamView: document.getElementById('stream-view'),
@@ -266,286 +330,193 @@
             btnSendChat: document.getElementById('btn-send-chat'),
             chatStatus: document.getElementById('chat-status'),
             toast: document.getElementById('toast'),
-            toastMsg: document.getElementById('toast-msg')
+            toastMsg: document.getElementById('toast-msg'),
+            nexusLoginState: document.getElementById('nexus-login-state'),
+            nexusWalletState: document.getElementById('nexus-wallet-state'),
+            nexusBalanceDisplay: document.getElementById('nexus-balance'),
+            btnNexusConnect: document.getElementById('btn-nexus-connect'),
+            watchRewardContainer: document.getElementById('watch-reward-container'),
+            watchRewardStatus: document.getElementById('watch-reward-status'),
+            watchRewardProgress: document.getElementById('watch-reward-progress')
         };
 
-        // Attach main event listeners
-        DOM.btnCreate.addEventListener('click', startBroadcasting);
-        DOM.btnJoin.addEventListener('click', tuneIn);
-        
-        window.resetApp = resetApp;
-        window.sendChatMessage = sendChatMessage;
-        window.handleKeyPress = (e) => { if (e.key === 'Enter') sendChatMessage(); };
-
+        // Initialize Draggable Chat Overlay
         let isDragging = false;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
 
-        function startDrag(e) {
-            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
-            
+        DOM.chatHeader.addEventListener('mousedown', (e) => {
             isDragging = true;
-            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-
-            // Maintain exact height before clearing the bottom constraint
-            if (!DOM.chatOverlay.style.height) {
-                DOM.chatOverlay.style.height = `${DOM.chatOverlay.offsetHeight}px`;
-            }
-
             const rect = DOM.chatOverlay.getBoundingClientRect();
-            dragOffsetX = clientX - rect.left;
-            dragOffsetY = clientY - rect.top;
-
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', stopDrag);
-            document.addEventListener('touchmove', onDrag, { passive: false });
-            document.addEventListener('touchend', stopDrag);
-        }
-
-        function onDrag(e) {
-            if (!isDragging) return;
-            if (e.cancelable) e.preventDefault(); // Prevent scroll while dragging on touch
-
-            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-
-            const containerRect = DOM.videoContainer.getBoundingClientRect();
-
-            let newX = clientX - dragOffsetX - containerRect.left;
-            let newY = clientY - dragOffsetY - containerRect.top;
-
-            const maxX = containerRect.width - DOM.chatOverlay.offsetWidth;
-            const maxY = containerRect.height - DOM.chatOverlay.offsetHeight;
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
             
-            // Constrain chat box bounds inside the video container
-            newX = Math.max(0, Math.min(newX, maxX));
-            newY = Math.max(0, Math.min(newY, maxY));
-
-            DOM.chatOverlay.style.left = `${newX}px`;
-            DOM.chatOverlay.style.top = `${newY}px`;
-            DOM.chatOverlay.style.right = 'auto'; // Clear CSS defaults
+            // Switch positioning to fixed while dragging
+            DOM.chatOverlay.style.right = 'auto';
             DOM.chatOverlay.style.bottom = 'auto';
-        }
+            DOM.chatOverlay.style.left = `${rect.left}px`;
+            DOM.chatOverlay.style.top = `${rect.top}px`;
+        });
 
-        function stopDrag() {
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const containerRect = DOM.videoContainer.getBoundingClientRect();
+            let newLeft = e.clientX - dragOffsetX;
+            let newTop = e.clientY - dragOffsetY;
+
+            // Clamp coordinates inside video container
+            newLeft = Math.max(containerRect.left, Math.min(newLeft, containerRect.right - DOM.chatOverlay.offsetWidth));
+            newTop = Math.max(containerRect.top, Math.min(newTop, containerRect.bottom - DOM.chatOverlay.offsetHeight));
+
+            DOM.chatOverlay.style.left = `${newLeft - containerRect.left}px`;
+            DOM.chatOverlay.style.top = `${newTop - containerRect.top}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
             isDragging = false;
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
-            document.removeEventListener('touchmove', onDrag);
-            document.removeEventListener('touchend', stopDrag);
-        }
+        });
 
-        DOM.chatHeader.addEventListener('mousedown', startDrag);
-        DOM.chatHeader.addEventListener('touchstart', startDrag, { passive: false });
+        // --- BROADCASTER LOGIC ---
+        async function startBroadcast() {
+            // Remind user to enable audio in browser prompt
+            showToast("ℹ️ Make sure to check 'Share tab audio' in browser prompt!");
 
-        function showToast(msg) {
-            DOM.toastMsg.textContent = msg;
-            DOM.toast.classList.add('show');
-            setTimeout(() => DOM.toast.classList.remove('show'), 3000);
-        }
-
-        function setVideoOverlay(iconClass, text, show = true) {
-            if (show) {
-                DOM.videoOverlay.classList.remove('hidden');
-                DOM.overlayIcon.className = `fa-solid text-4xl mb-4 ${iconClass}`;
-                DOM.overlayText.textContent = text;
-            } else {
-                DOM.videoOverlay.classList.add('hidden');
-            }
-        }
-
-        function updateViewerCount() {
-            if (isBroadcaster) {
-                DOM.viewerCountContainer.classList.remove('hidden');
-                DOM.viewerCount.textContent = viewerConnections.length;
-            }
-        }
-
-        function appendChatMessage(sender, text, isSystem = false) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'chat-text-shadow leading-snug mb-1';
-            
-            if (isSystem) {
-                msgDiv.classList.add('text-center', 'text-white/80', 'text-xs', 'italic', 'my-2');
-                msgDiv.textContent = text;
-            } else {
-                const isMe = sender === 'You';
-                const isHost = sender === 'Broadcaster';
-                
-                let nameColor = 'text-emerald-400'; // Viewer defaults to green
-                if (isHost) nameColor = 'text-rose-400'; // Host is red
-                else if (isMe) nameColor = 'text-indigo-400'; // You are purple/indigo
-
-                // Twitch style: Username: Message (No bubble background)
-                msgDiv.innerHTML = `<span class="font-bold ${nameColor}">${sender}:</span> <span class="text-white font-medium">${text}</span>`;
-            }
-            
-            DOM.chatMessages.appendChild(msgDiv);
-            DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
-        }
-
-        function updateChatStatus(connected) {
-            if (connected) {
-                DOM.chatStatus.textContent = 'Connected';
-                DOM.chatStatus.className = 'text-[10px] font-medium px-2 py-0.5 bg-emerald-500/40 text-emerald-100 rounded-full chat-text-shadow';
-                DOM.chatInput.disabled = false;
-                DOM.btnSendChat.disabled = false;
-                DOM.chatInput.placeholder = "Type a message...";
-            } else {
-                DOM.chatStatus.textContent = 'Offline';
-                DOM.chatStatus.className = 'text-[10px] font-medium px-2 py-0.5 bg-red-500/40 text-red-100 rounded-full chat-text-shadow';
-                DOM.chatInput.disabled = true;
-                DOM.btnSendChat.disabled = true;
-                DOM.chatInput.placeholder = "Not connected...";
-            }
-        }
-
-        async function startBroadcasting() {
             try {
-                // 1. Get Screen Stream (Video + Optional System Audio)
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                
-                // 2. Get Microphone Stream
-                let micStream;
+                // 1. Capture Screen Display
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always" },
+                    audio: true // System / browser tab audio
+                });
+
+                // 2. Capture Microphone Audio
+                let micStream = null;
                 try {
                     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                } catch (e) {
-                    console.warn("Microphone access denied. Broadcasting without mic.");
-                    showToast("Microphone skipped. Screen only.");
+                } catch (micErr) {
+                    console.warn("Microphone access denied or not found. Continuing with screen audio only.", micErr);
                 }
 
-                // 3. Mix Audio using AudioContext
-                const audioContext = new AudioContext();
-                const audioDestination = audioContext.createMediaStreamDestination();
+                // 3. Mix Audio Streams (Screen + Mic)
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioDestination = audioCtx.createMediaStreamDestination();
+
+                if (screenStream.getAudioTracks().length > 0) {
+                    const screenSource = audioCtx.createMediaStreamSource(screenStream);
+                    screenSource.connect(audioDestination);
+                }
 
                 if (micStream && micStream.getAudioTracks().length > 0) {
-                    audioContext.createMediaStreamSource(micStream).connect(audioDestination);
-                }
-                if (screenStream.getAudioTracks().length > 0) {
-                    audioContext.createMediaStreamSource(screenStream).connect(audioDestination);
+                    const micSource = audioCtx.createMediaStreamSource(micStream);
+                    micSource.connect(audioDestination);
                 }
 
-                // 4. Create Combined Stream
-                localStream = new MediaStream([
+                // Combine screen video track with mixed audio track
+                const combinedTracks = [
                     ...screenStream.getVideoTracks(),
                     ...audioDestination.stream.getAudioTracks()
-                ]);
-                
-                // Save references for cleanup later
+                ];
+
+                localStream = new MediaStream(combinedTracks);
                 localStream.originalScreen = screenStream;
                 if (micStream) localStream.originalMic = micStream;
 
-                DOM.video.srcObject = localStream;
-                DOM.video.muted = true; // Mute local playback to avoid echo
-                
-                // 2. Switch UI
-                isBroadcaster = true;
-                DOM.lobbyView.classList.add('hidden');
-                DOM.streamView.classList.remove('hidden');
-                DOM.roleLabel.innerHTML = '<i class="fa-solid fa-tower-broadcast mr-1"></i> Broadcaster';
-                setVideoOverlay('fa-circle-notch fa-spin text-indigo-500', 'Registering Channel...');
-
-                // 3. Initialize Peer with Fixed ID
-                // The Broadcaster claims the GLOBAL_CHANNEL_ID
-                peer = new Peer(GLOBAL_CHANNEL_ID, peerConfig);
-
-                peer.on('open', (id) => {
-                    console.log('Broadcaster registered as:', id);
-                    setVideoOverlay('', '', false); // Hide overlay
-                    DOM.liveIndicator.classList.replace('bg-red-500', 'bg-emerald-500');
-                    DOM.liveIndicator.classList.add('pulse-green');
-                    updateChatStatus(true);
-                    appendChatMessage('System', 'You are now live on the Global Channel!', true);
-                    updateViewerCount();
-                });
-
-                // Listen for native stop sharing button on the original screen stream
+                // Listen for native "Stop Sharing" button click
                 screenStream.getVideoTracks()[0].onended = () => {
-                    appendChatMessage('System', 'Screen share stopped.', true);
+                    showToast("Screen sharing stopped.");
                     resetApp();
                 };
 
-                peer.on('error', (err) => {
-                    console.error('Peer error:', err);
-                    if (err.type === 'unavailable-id') {
-                        alert("Someone else is currently broadcasting on the global channel!");
-                        resetApp();
-                    }
-                });
+            } catch (err) {
+                console.error("Error capturing screen/audio:", err);
+                showToast("Failed to share screen. Permissions denied.");
+                return;
+            }
 
-                // 4. Handle incoming Viewer connections
-                peer.on('connection', (conn) => {
-                    console.log('Viewer connected:', conn.peer);
-                    viewerConnections.push(conn);
-                    updateViewerCount();
-                    
-                    conn.on('open', () => {
-                        // Welcome the viewer
-                        conn.send({ type: 'system', text: 'Connected to stream chat.' });
-                        
-                        // Broadcast that someone joined (optional, can get spammy)
-                        // broadcastChat('System', 'A viewer joined.', true);
-                    });
+            // Switch to Stream View UI
+            isBroadcaster = true;
+            DOM.lobbyView.classList.add('hidden');
+            DOM.streamView.classList.remove('hidden');
+            DOM.roleLabel.innerHTML = '<i class="fa-solid fa-satellite-dish mr-1"></i> Broadcaster';
+            DOM.viewerCountContainer.classList.remove('hidden');
+            
+            // Set local preview video
+            DOM.video.srcObject = localStream;
+            DOM.video.muted = true; // Avoid feedback loop locally
+            setVideoOverlay('', '', false);
 
-                    conn.on('data', (data) => {
-                        // Received a chat message from a viewer
-                        if (data.type === 'chat') {
-                            const senderName = `Viewer-${conn.peer.substring(0,4)}`;
-                            // Show locally
-                            appendChatMessage(senderName, data.text);
-                            // Relay to ALL other viewers
-                            broadcastChat(senderName, data.text, false, conn.peer);
-                        }
-                    });
+            // Register Host Peer with Fixed Global ID
+            peer = new Peer(GLOBAL_CHANNEL_ID, peerConfig);
 
-                    conn.on('close', () => {
-                        console.log('Viewer disconnected:', conn.peer);
-                        viewerConnections = viewerConnections.filter(v => v.peer !== conn.peer);
-                        updateViewerCount();
-                    });
+            peer.on('open', (id) => {
+                console.log('Broadcaster registered on network as ID:', id);
+                DOM.liveIndicator.classList.replace('bg-red-500', 'bg-emerald-500');
+                DOM.liveIndicator.classList.add('pulse-live');
+                updateChatStatus(true);
+                appendChatMessage('System', 'Broadcast is LIVE! Viewers can tune in now.', true);
+            });
 
-                    // 5. Instantly CALL the viewer back with our video stream!
-                    // This bypasses the need for the viewer to approve camera permissions to call us.
+            // Handle incoming Viewer connections
+            peer.on('connection', (conn) => {
+                viewerConnections.push(conn);
+                updateViewerCountUI();
+
+                conn.on('open', () => {
+                    console.log(`Viewer ${conn.peer} connected to chat.`);
+                    broadcastSystemMessage(`A new viewer connected!`);
+
+                    // Send active video call to viewer
                     const call = peer.call(conn.peer, localStream);
                     viewerCalls.push(call);
                 });
 
-            } catch (error) {
-                console.error('Error starting broadcast:', error);
-                if (error.name !== 'NotAllowedError') {
-                    alert("Could not start broadcast. Check permissions.");
-                }
-                resetApp();
-            }
-        }
+                conn.on('data', (data) => {
+                    if (data.type === 'chat') {
+                        // Relay chat to all viewers
+                        broadcastData({ type: 'chat', senderName: data.senderName, text: data.text });
+                        appendChatMessage(data.senderName, data.text);
+                    } else if (data.type === 'gift') {
+                        // Relay gift alert to all viewers
+                        broadcastData({ type: 'gift', senderName: data.senderName, amount: data.amount });
+                        showGiftAlert(data.senderName, data.amount);
+                        appendChatMessage(data.senderName, `gifted ${data.amount} Nexus Coins!`, false, true);
+                    }
+                });
 
-        // Relay chat to multiple viewers
-        function broadcastChat(senderName, text, isSystem = false, excludePeerId = null) {
-            const payload = { type: isSystem ? 'system' : 'chat', senderName, text };
-            viewerConnections.forEach(conn => {
-                if (conn.open && conn.peer !== excludePeerId) {
-                    conn.send(payload);
+                conn.on('close', () => {
+                    viewerConnections = viewerConnections.filter(c => c !== conn);
+                    updateViewerCountUI();
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.error("Broadcaster Peer Error:", err);
+                if (err.type === 'unavailable-id') {
+                    showToast("Another broadcast is currently active on this channel.");
+                    setTimeout(resetApp, 2500);
                 }
             });
         }
 
+        // --- VIEWER LOGIC ---
         function tuneIn() {
-            // Switch UI
             isBroadcaster = false;
             DOM.lobbyView.classList.add('hidden');
             DOM.streamView.classList.remove('hidden');
             DOM.roleLabel.innerHTML = '<i class="fa-solid fa-users-viewfinder mr-1"></i> Viewer';
             setVideoOverlay('fa-circle-notch fa-spin text-emerald-500', 'Finding Broadcast...');
 
-            // 1. Create a Peer with a random automatic ID
+            // Show Watch & Earn bar for viewers
+            DOM.watchRewardContainer.classList.remove('hidden');
+
+            // Initialize Viewer Peer with automatic ID
             peer = new Peer(peerConfig);
 
             peer.on('open', (myId) => {
                 console.log('Viewer registered as:', myId);
                 setVideoOverlay('fa-circle-notch fa-spin text-emerald-500', 'Tuning in...');
                 
-                // 2. Connect to the Broadcaster's fixed ID to establish data/chat channel
+                // Connect to Host Channel
                 hostConnection = peer.connect(GLOBAL_CHANNEL_ID);
 
                 hostConnection.on('open', () => {
@@ -553,6 +524,9 @@
                     updateChatStatus(true);
                     DOM.liveIndicator.classList.replace('bg-red-500', 'bg-emerald-500');
                     DOM.liveIndicator.classList.add('pulse-green');
+                    
+                    // Start Watch & Earn timer
+                    startWatchRewardTimer();
                 });
 
                 hostConnection.on('data', (data) => {
@@ -560,89 +534,340 @@
                         appendChatMessage('System', data.text, true);
                     } else if (data.type === 'chat') {
                         appendChatMessage(data.senderName, data.text);
+                    } else if (data.type === 'gift') {
+                        showGiftAlert(data.senderName, data.amount);
+                        appendChatMessage(data.senderName, `gifted ${data.amount} Nexus Coins!`, false, true);
                     }
                 });
 
                 hostConnection.on('close', () => {
-                    console.log('Broadcaster closed connection.');
                     setVideoOverlay('fa-video-slash text-slate-500', 'Broadcast Ended');
                     updateChatStatus(false);
                     DOM.liveIndicator.classList.replace('bg-emerald-500', 'bg-red-500');
                     DOM.liveIndicator.classList.remove('pulse-green');
-                    appendChatMessage('System', 'Host disconnected.', true);
+                    appendChatMessage('System', 'Broadcaster went offline.', true);
+                    stopWatchRewardTimer();
                 });
             });
 
-            // 3. Answer incoming video call from the Broadcaster
+            // Answer incoming stream call from broadcaster
             peer.on('call', (call) => {
-                console.log('Receiving video from broadcaster');
-                // Answer without sending a stream back
+                console.log('Receiving media stream from broadcaster...');
                 call.answer(); 
                 
                 call.on('stream', (remoteStream) => {
-                    // Display the stream!
                     DOM.video.srcObject = remoteStream;
-                    DOM.video.muted = false; // Unmute so we hear the host
+                    DOM.video.muted = false; // Enable audio playback
                     setVideoOverlay('', '', false);
                 });
                 
                 call.on('close', () => {
                     DOM.video.srcObject = null;
                     setVideoOverlay('fa-video-slash text-slate-500', 'Broadcast Ended');
+                    stopWatchRewardTimer();
                 });
             });
 
             peer.on('error', (err) => {
-                console.error('Viewer Peer error:', err);
+                console.error('Viewer Peer Error:', err);
                 if (err.type === 'peer-unavailable') {
-                    setVideoOverlay('fa-tower-broadcast text-slate-500', 'No one is currently live.');
+                    setVideoOverlay('fa-tower-broadcast text-slate-500', 'No live stream is currently active.');
+                    stopWatchRewardTimer();
                     setTimeout(resetApp, 3000);
                 }
             });
         }
 
+        // --- WATCH TO EARN REWARDS SYSTEM ---
+        function startWatchRewardTimer() {
+            stopWatchRewardTimer();
+            watchTimeSeconds = 0;
+            updateWatchProgressUI();
+
+            watchRewardTimer = setInterval(() => {
+                watchTimeSeconds++;
+                
+                if (watchTimeSeconds >= REWARD_CYCLE_SECONDS) {
+                    watchTimeSeconds = 0;
+                    creditWatchReward(REWARD_COIN_AMOUNT);
+                }
+                
+                updateWatchProgressUI();
+            }, 1000);
+        }
+
+        function stopWatchRewardTimer() {
+            if (watchRewardTimer) {
+                clearInterval(watchRewardTimer);
+                watchRewardTimer = null;
+            }
+        }
+
+        function updateWatchProgressUI() {
+            const remaining = REWARD_CYCLE_SECONDS - watchTimeSeconds;
+            const progressPercent = (watchTimeSeconds / REWARD_CYCLE_SECONDS) * 100;
+            
+            DOM.watchRewardProgress.style.width = `${progressPercent}%`;
+            DOM.watchRewardStatus.textContent = `+${REWARD_COIN_AMOUNT} NC in ${remaining}s`;
+        }
+
+        function creditWatchReward(amount) {
+            nexusBalance += amount;
+            earnedSessionCoins += amount;
+            DOM.nexusBalanceDisplay.textContent = nexusBalance;
+
+            // Trigger visual popup drop animation
+            showCoinPopupAnimation(`+${amount} NC Watch Drop!`);
+            showToast(`🎉 Earned +${amount} Nexus Coins for watching!`);
+            appendChatMessage('System', `🎁 You earned +${amount} Nexus Coins for active watch time!`, true);
+        }
+
+        function showCoinPopupAnimation(text) {
+            const popup = document.createElement('div');
+            popup.className = 'absolute z-40 text-yellow-400 font-extrabold text-xl chat-text-shadow flex items-center gap-1.5 animate-float-coin pointer-events-none';
+            popup.style.bottom = '120px';
+            popup.style.right = '40px';
+            popup.innerHTML = `<i class="fa-solid fa-coins text-2xl drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]"></i> ${text}`;
+
+            DOM.videoContainer.appendChild(popup);
+            setTimeout(() => popup.remove(), 2000);
+        }
+
+        // --- CHAT & MESSAGING RELAY ---
         function sendChatMessage() {
-            const input = DOM.chatInput.value.trim();
-            if (!input) return;
+            const text = DOM.chatInput.value.trim();
+            if (!text) return;
+
+            const senderName = isBroadcaster ? "Streamer" : "Viewer_" + Math.floor(1000 + Math.random() * 9000);
 
             if (isBroadcaster) {
-                // Send to everyone
-                appendChatMessage('You', input);
-                broadcastChat('Broadcaster', input);
+                broadcastData({ type: 'chat', senderName: senderName, text: text });
+                appendChatMessage(senderName, text);
+            } else if (hostConnection && hostConnection.open) {
+                hostConnection.send({ type: 'chat', senderName: senderName, text: text });
+                appendChatMessage(senderName, text);
             } else {
-                // Send to host (Host will relay)
-                if (hostConnection && hostConnection.open) {
-                    hostConnection.send({ type: 'chat', text: input });
-                    appendChatMessage('You', input);
-                }
+                showToast("Not connected to chat.");
             }
+
             DOM.chatInput.value = '';
         }
 
+        function appendChatMessage(sender, message, isSystem = false, isGift = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-text-shadow leading-tight text-xs py-0.5';
+
+            if (isSystem) {
+                msgDiv.innerHTML = `<span class="text-indigo-300 font-bold">[System]:</span> <span class="text-slate-200">${escapeHTML(message)}</span>`;
+            } else if (isGift) {
+                msgDiv.innerHTML = `<span class="text-yellow-400 font-bold">🎁 ${escapeHTML(sender)}:</span> <span class="text-yellow-200 font-semibold">${escapeHTML(message)}</span>`;
+            } else {
+                const colorClass = sender === 'Streamer' ? 'text-purple-400' : 'text-emerald-400';
+                msgDiv.innerHTML = `<span class="${colorClass} font-bold">${escapeHTML(sender)}:</span> <span class="text-white">${escapeHTML(message)}</span>`;
+            }
+
+            DOM.chatMessages.appendChild(msgDiv);
+            DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
+        }
+
+        // --- NEXUS STORE & GIFTING INTEGRATION ---
+        async function connectNexusWallet() {
+            if (NEXUS_CONFIG.useRealAPI) {
+                const tokenInput = prompt("Enter your Nexus Store Auth Token:", "mock_token_123");
+                if (!tokenInput) return;
+                nexusAuthToken = tokenInput;
+
+                try {
+                    const response = await fetch(`${NEXUS_CONFIG.baseUrl}/wallet/balance`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${nexusAuthToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        nexusBalance = data.balance;
+                        completeNexusConnection();
+                    } else {
+                        alert("Failed to authenticate with Nexus Store: " + data.message);
+                    }
+                } catch (err) {
+                    console.error("Nexus Store API Error:", err);
+                    alert("Could not connect to Nexus Store backend server.");
+                }
+            } else {
+                // Simulated Link
+                nexusBalance = 500; // Demo starting balance
+                completeNexusConnection();
+            }
+        }
+
+        function completeNexusConnection() {
+            isNexusLinked = true;
+            DOM.nexusBalanceDisplay.textContent = nexusBalance;
+            DOM.nexusLoginState.classList.add('hidden');
+            DOM.nexusWalletState.classList.remove('hidden');
+            showToast("Connected to Nexus Store!");
+        }
+
+        async function sendNexusGift(amount) {
+            if (!isNexusLinked) {
+                showToast("Please link your Nexus Wallet first!");
+                return;
+            }
+
+            if (nexusBalance < amount) {
+                showToast("Insufficient Nexus Coins balance!");
+                return;
+            }
+
+            if (isProcessingGift) return;
+            isProcessingGift = true;
+
+            const senderName = "Viewer_" + Math.floor(1000 + Math.random() * 9000);
+
+            if (NEXUS_CONFIG.useRealAPI) {
+                try {
+                    const response = await fetch(`${NEXUS_CONFIG.baseUrl}/wallet/gift`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${nexusAuthToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount: amount,
+                            broadcasterId: GLOBAL_CHANNEL_ID
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        nexusBalance = data.newBalance;
+                        DOM.nexusBalanceDisplay.textContent = nexusBalance;
+                        dispatchGiftToNetwork(senderName, amount);
+                    } else {
+                        alert("Gift Transaction Failed: " + data.message);
+                    }
+                } catch (err) {
+                    console.error("Gift API Error:", err);
+                    alert("Failed to process gift through Nexus backend.");
+                } finally {
+                    isProcessingGift = false;
+                }
+            } else {
+                // Local Simulation
+                nexusBalance -= amount;
+                DOM.nexusBalanceDisplay.textContent = nexusBalance;
+                dispatchGiftToNetwork(senderName, amount);
+                isProcessingGift = false;
+            }
+        }
+
+        function dispatchGiftToNetwork(senderName, amount) {
+            if (isBroadcaster) {
+                broadcastData({ type: 'gift', senderName: senderName, amount: amount });
+                showGiftAlert(senderName, amount);
+                appendChatMessage(senderName, `gifted ${amount} Nexus Coins!`, false, true);
+            } else if (hostConnection && hostConnection.open) {
+                hostConnection.send({ type: 'gift', senderName: senderName, amount: amount });
+                showGiftAlert(senderName, amount);
+                appendChatMessage(senderName, `gifted ${amount} Nexus Coins!`, false, true);
+            }
+        }
+
+        function showGiftAlert(sender, amount) {
+            const alertBox = document.createElement('div');
+            alertBox.className = 'absolute z-40 p-4 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-500 to-purple-600 text-slate-950 font-black shadow-2xl flex items-center gap-3 animate-pop-in pointer-events-none border-2 border-yellow-300';
+            alertBox.style.top = '20%';
+            alertBox.style.left = '50%';
+            alertBox.style.transform = 'translate(-50%, -50%)';
+
+            alertBox.innerHTML = `
+                <div class="w-12 h-12 rounded-xl bg-black/20 flex items-center justify-center text-2xl text-yellow-950">
+                    <i class="fa-solid fa-gift"></i>
+                </div>
+                <div>
+                    <div class="text-xs uppercase tracking-wider text-yellow-950 font-extrabold">Nexus Stream Gift!</div>
+                    <div class="text-lg text-white chat-text-shadow">${escapeHTML(sender)} sent ${amount} Nexus Coins!</div>
+                </div>
+            `;
+
+            DOM.videoContainer.appendChild(alertBox);
+            setTimeout(() => alertBox.remove(), 4000);
+        }
+
+        // --- HELPER FUNCTIONS ---
+        function broadcastData(data) {
+            viewerConnections.forEach(conn => {
+                if (conn.open) conn.send(data);
+            });
+        }
+
+        function broadcastSystemMessage(text) {
+            broadcastData({ type: 'system', text: text });
+            appendChatMessage('System', text, true);
+        }
+
+        function updateViewerCountUI() {
+            DOM.viewerCount.textContent = viewerConnections.length;
+        }
+
+        function updateChatStatus(connected) {
+            if (connected) {
+                DOM.chatStatus.textContent = 'Connected';
+                DOM.chatStatus.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30';
+            } else {
+                DOM.chatStatus.textContent = 'Disconnected';
+                DOM.chatStatus.className = 'text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-semibold border border-red-500/30';
+            }
+        }
+
+        function setVideoOverlay(iconClass, text, show = true) {
+            if (show) {
+                DOM.videoOverlay.classList.remove('hidden');
+                DOM.overlayIcon.className = `fa-solid ${iconClass} text-3xl`;
+                DOM.overlayText.textContent = text;
+            } else {
+                DOM.videoOverlay.classList.add('hidden');
+            }
+        }
+
+        function showToast(msg) {
+            DOM.toastMsg.textContent = msg;
+            DOM.toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                DOM.toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3500);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
         function resetApp() {
-            console.log("Resetting application...");
-            
-            // Cleanup Streams
+            stopWatchRewardTimer();
+
+            // Stop streams
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
-                if (localStream.originalScreen) {
-                    localStream.originalScreen.getTracks().forEach(t => t.stop());
-                }
-                if (localStream.originalMic) {
-                    localStream.originalMic.getTracks().forEach(t => t.stop());
-                }
+                if (localStream.originalScreen) localStream.originalScreen.getTracks().forEach(t => t.stop());
+                if (localStream.originalMic) localStream.originalMic.getTracks().forEach(t => t.stop());
                 localStream = null;
             }
             DOM.video.srcObject = null;
 
-            // Cleanup Connections
+            // Destroy connections
             if (isBroadcaster) {
                 viewerConnections.forEach(c => c.close());
                 viewerCalls.forEach(c => c.close());
                 viewerConnections = [];
                 viewerCalls = [];
-            } else {
-                if (hostConnection) hostConnection.close();
+            } else if (hostConnection) {
+                hostConnection.close();
                 hostConnection = null;
             }
 
@@ -651,27 +876,25 @@
                 peer = null;
             }
 
-            // Reset UI
+            // Reset UI View
             DOM.streamView.classList.add('hidden');
             DOM.lobbyView.classList.remove('hidden');
-            DOM.chatMessages.innerHTML = '<div class="text-center text-white/80 text-xs italic my-2 chat-text-shadow">Welcome to the P2P Chat Room.</div>';
+            DOM.chatMessages.innerHTML = '<div class="text-center text-slate-300 text-xs italic my-2 chat-text-shadow bg-black/30 py-1 px-2 rounded-lg border border-white/5">Welcome to the PeerStream P2P Chat Room!</div>';
+            DOM.watchRewardContainer.classList.add('hidden');
             updateChatStatus(false);
             DOM.liveIndicator.classList.replace('bg-emerald-500', 'bg-red-500');
-            DOM.liveIndicator.classList.remove('pulse-green');
+            DOM.liveIndicator.classList.remove('pulse-live', 'pulse-green');
             DOM.viewerCountContainer.classList.add('hidden');
             isBroadcaster = false;
 
+            // Reset chat placement
             DOM.chatOverlay.style.top = '1rem';
             DOM.chatOverlay.style.right = '1rem';
             DOM.chatOverlay.style.left = 'auto';
-            DOM.chatOverlay.style.bottom = '1rem';
-            DOM.chatOverlay.style.height = '';
+            DOM.chatOverlay.style.bottom = 'auto';
         }
 
-        // Ensure cleanup if browser tab closes
-        window.addEventListener('beforeunload', () => {
-            if (peer) peer.destroy();
-        });
+        window.addEventListener('beforeunload', () => resetApp());
     </script>
 </body>
 </html>
