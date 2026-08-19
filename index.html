@@ -114,9 +114,9 @@
                         <i class="fa-solid fa-tower-broadcast"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white mb-2">Go Live</h3>
-                    <p class="text-slate-400 mb-8 text-sm">Host the global channel. Share your screen with anyone who clicks Tune In.</p>
+                    <p class="text-slate-400 mb-8 text-sm">Host the global channel. Share your screen and microphone with anyone who clicks Tune In.</p>
                     <button id="btn-create-room" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-display"></i> Share Screen
+                        <i class="fa-solid fa-display"></i> Share Screen & Mic
                     </button>
                 </div>
 
@@ -337,10 +337,41 @@
 
         async function startBroadcasting() {
             try {
-                // 1. Get Screen Stream
-                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                // 1. Get Screen Stream (Video + Optional System Audio)
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                
+                // 2. Get Microphone Stream
+                let micStream;
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (e) {
+                    console.warn("Microphone access denied. Broadcasting without mic.");
+                    showToast("Microphone skipped. Screen only.");
+                }
+
+                // 3. Mix Audio using AudioContext
+                const audioContext = new AudioContext();
+                const audioDestination = audioContext.createMediaStreamDestination();
+
+                if (micStream && micStream.getAudioTracks().length > 0) {
+                    audioContext.createMediaStreamSource(micStream).connect(audioDestination);
+                }
+                if (screenStream.getAudioTracks().length > 0) {
+                    audioContext.createMediaStreamSource(screenStream).connect(audioDestination);
+                }
+
+                // 4. Create Combined Stream
+                localStream = new MediaStream([
+                    ...screenStream.getVideoTracks(),
+                    ...audioDestination.stream.getAudioTracks()
+                ]);
+                
+                // Save references for cleanup later
+                localStream.originalScreen = screenStream;
+                if (micStream) localStream.originalMic = micStream;
+
                 DOM.video.srcObject = localStream;
-                DOM.video.muted = true; // Mute local playback
+                DOM.video.muted = true; // Mute local playback to avoid echo
                 
                 // 2. Switch UI
                 isBroadcaster = true;
@@ -363,8 +394,8 @@
                     updateViewerCount();
                 });
 
-                // Listen for native stop sharing button
-                localStream.getVideoTracks()[0].onended = () => {
+                // Listen for native stop sharing button on the original screen stream
+                screenStream.getVideoTracks()[0].onended = () => {
                     appendChatMessage('System', 'Screen share stopped.', true);
                     resetApp();
                 };
@@ -528,6 +559,12 @@
             // Cleanup Streams
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
+                if (localStream.originalScreen) {
+                    localStream.originalScreen.getTracks().forEach(t => t.stop());
+                }
+                if (localStream.originalMic) {
+                    localStream.originalMic.getTracks().forEach(t => t.stop());
+                }
                 localStream = null;
             }
             DOM.video.srcObject = null;
