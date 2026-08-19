@@ -17,9 +17,13 @@
             overflow: hidden;
         }
 
+        .premium-bg {
+            background: radial-gradient(circle at top right, #1e1b4b, #020617, #020617);
+        }
+
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -37,7 +41,7 @@
         /* Fullscreen Ad Overlay */
         .ad-takeover {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            inset: 0;
             background: rgba(0, 0, 0, 0.95);
             z-index: 40;
             display: flex;
@@ -68,10 +72,6 @@
             100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
         }
 
-        /* --- NEW PREMIUM STYLES --- */
-        .premium-bg {
-            background: radial-gradient(circle at top right, #1e1b4b, #020617, #020617);
-        }
         .glass-button {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -86,6 +86,8 @@
         .control-bar {
             background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
         }
+        
+        /* Video Player Range Slider */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -108,6 +110,7 @@
             background: rgba(255,255,255,0.3);
             border-radius: 2px;
         }
+        
         .fade-transition {
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
@@ -117,24 +120,23 @@
 </head>
 <body class="h-screen w-screen flex flex-col premium-bg">
 
-    <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Header / Navbar -->
-    <header class="h-14 glass-panel border-b flex items-center justify-between px-6 z-50 relative shrink-0">
+    <header class="h-16 glass-panel border-b border-slate-700/50 flex items-center justify-between px-6 z-50 relative shrink-0 shadow-lg">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-lg shadow-[0_0_15px_rgba(79,70,229,0.5)]">
+            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-lg shadow-[0_0_15px_rgba(79,70,229,0.5)]">
                 <i class="fa-solid fa-play"></i>
             </div>
-            <h1 class="font-bold text-xl tracking-tight">PeerStream <span class="text-indigo-400 font-normal">HQ</span></h1>
+            <h1 class="font-bold text-2xl tracking-tight">PeerStream <span class="text-indigo-400 font-normal">HQ</span></h1>
             
             <!-- Live Status Indicator -->
-            <div id="live-indicator" class="ml-4 flex items-center gap-2 hidden">
+            <div id="live-indicator" class="ml-4 flex items-center gap-2 hidden bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
                 <div class="w-2.5 h-2.5 rounded-full bg-red-500" id="live-dot"></div>
-                <span id="role-label" class="text-xs font-semibold text-gray-300 uppercase tracking-wider">Lobby</span>
+                <span id="role-label" class="text-xs font-semibold text-gray-200 uppercase tracking-wider">Lobby</span>
                 
-                <!-- Ad Free VIP Badge (Viewers Only) -->
-                <div id="ad-free-badge" class="ml-2 hidden items-center gap-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase">
+                <!-- Ad Free VIP Badge -->
+                <div id="ad-free-badge" class="ml-2 hidden items-center gap-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase shadow-[0_0_10px_rgba(234,179,8,0.2)]">
                     <i class="fa-solid fa-crown"></i> <span id="ad-free-text">Ad-Free</span>
                 </div>
             </div>
@@ -152,178 +154,172 @@
             </div>
 
             <!-- Viewer Count -->
-            <div id="viewer-count-container" class="hidden items-center gap-2 text-gray-300 bg-slate-800/50 px-3 py-1 rounded-full text-sm border border-slate-700">
+            <div id="viewer-count-container" class="hidden items-center gap-2 text-gray-300 bg-slate-800/80 px-4 py-1.5 rounded-full text-sm border border-slate-700">
                 <i class="fa-solid fa-eye text-indigo-400"></i>
                 <span id="viewer-count" class="font-semibold">0</span>
             </div>
 
             <!-- Nexus Wallet Integration -->
-            <div class="flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 shadow-inner">
-                <i class="fa-solid fa-wallet text-indigo-400"></i>
+            <div class="flex items-center gap-3 bg-slate-800/80 border border-slate-600 rounded-lg px-4 py-2 shadow-inner">
+                <i class="fa-solid fa-wallet text-indigo-400 text-lg"></i>
                 <div class="flex flex-col">
-                    <span class="text-[10px] text-gray-400 uppercase leading-none" id="wallet-username">Not Connected</span>
-                    <span class="text-sm font-bold leading-none mt-0.5 text-yellow-400" id="wallet-balance">-- NC</span>
+                    <span class="text-[10px] text-gray-400 uppercase leading-none font-semibold tracking-wider" id="wallet-username">Not Connected</span>
+                    <span class="text-sm font-bold leading-none mt-1 text-yellow-400 tracking-wide" id="wallet-balance">-- NC</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="flex-1 relative w-full flex overflow-hidden">
         
         <!-- Lobby View (Initial State) -->
-        <div id="lobby-view" class="absolute inset-0 flex flex-col items-center justify-center z-20 fade-transition fade-in">
-            <!-- Decorative animated blobs -->
+        <div id="lobby-view" class="absolute inset-0 flex flex-col items-center justify-center z-20 fade-transition fade-in bg-slate-900/50">
+            <!-- Decorative Blobs -->
             <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
             <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
-            <div class="glass-panel p-10 rounded-2xl border border-slate-700/50 shadow-2xl max-w-lg w-full text-center relative z-10">
-                <div class="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-6 border border-indigo-400/30">
-                    <i class="fa-solid fa-satellite-dish text-4xl text-white"></i>
+            <div class="glass-panel p-12 rounded-2xl border border-slate-700/50 shadow-2xl max-w-xl w-full text-center relative z-10">
+                <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-8 border border-indigo-400/30">
+                    <i class="fa-solid fa-satellite-dish text-5xl text-white"></i>
                 </div>
-                <h2 class="text-3xl font-bold mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">PeerStream Studio</h2>
-                <p class="text-slate-400 text-sm mb-10 leading-relaxed">Broadcast to the world with ultra-low latency WebRTC, or tune into a high-fidelity peer-to-peer stream.</p>
+                <h2 class="text-4xl font-bold mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">PeerStream Studio</h2>
+                <p class="text-slate-400 text-base mb-12 leading-relaxed">Broadcast to the world with ultra-low latency WebRTC, or tune into a high-fidelity peer-to-peer stream.</p>
                 
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="startBroadcast()" class="group relative bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-4 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] overflow-hidden flex flex-col items-center gap-2 border border-indigo-400/50">
+                <div class="grid grid-cols-2 gap-6">
+                    <button onclick="startBroadcast()" class="group relative bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-5 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] overflow-hidden flex flex-col items-center gap-3 border border-indigo-400/50">
                         <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-                        <i class="fa-solid fa-video text-2xl z-10"></i>
-                        <span class="z-10">Go Live</span>
+                        <i class="fa-solid fa-video text-3xl z-10"></i>
+                        <span class="z-10 text-lg">Go Live</span>
                     </button>
-                    <button onclick="tuneIn()" class="glass-button text-white font-semibold py-4 px-6 rounded-xl flex flex-col items-center gap-2">
-                        <i class="fa-solid fa-desktop text-2xl text-indigo-400 drop-shadow-[0_0_10px_rgba(129,140,248,0.5)]"></i>
-                        <span>Watch Stream</span>
+                    <button onclick="tuneIn()" class="glass-button text-white font-semibold py-5 px-6 rounded-xl flex flex-col items-center gap-3 hover:bg-slate-800/80">
+                        <i class="fa-solid fa-desktop text-3xl text-indigo-400 drop-shadow-[0_0_10px_rgba(129,140,248,0.5)]"></i>
+                        <span class="text-lg">Watch Stream</span>
                     </button>
+                </div>
+                
+                <!-- Helper Note -->
+                <div class="mt-8 text-xs text-slate-500 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i> To test P2P, open a second tab and "Go Live" there first!
                 </div>
             </div>
         </div>
 
         <!-- Stream View (Active Broadcast) -->
-        <div id="stream-view" class="hidden absolute inset-0 flex fade-transition fade-out">
+        <div id="stream-view" class="hidden absolute inset-0 flex fade-transition fade-out z-10 bg-black">
             
             <!-- Video Area (Left) -->
             <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden group">
                 <video id="main-video" class="w-full h-full object-contain" autoplay playsinline></video>
                 
                 <!-- Unmute Overlay (For browser autoplay policies) -->
-                <div id="unmute-overlay" class="absolute inset-0 bg-black/80 flex items-center justify-center hidden z-30">
-                    <button onclick="unmuteStream()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-4 rounded-xl font-bold text-xl flex items-center gap-3 animate-bounce">
-                        <i class="fa-solid fa-volume-high"></i> Click to Hear Audio
+                <div id="unmute-overlay" class="absolute inset-0 bg-black/80 flex items-center justify-center hidden z-30 backdrop-blur-sm">
+                    <button onclick="unmuteStream()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-xl font-bold text-2xl flex items-center gap-4 animate-bounce shadow-[0_0_30px_rgba(79,70,229,0.5)]">
+                        <i class="fa-solid fa-volume-high"></i> Click to Unmute Stream
                     </button>
                 </div>
 
                 <!-- FULLSCREEN AD TAKEOVER OVERLAY -->
-                <div id="ad-takeover" class="ad-takeover">
-                    <div class="text-yellow-400 font-bold tracking-widest uppercase mb-4 animate-pulse"><i class="fa-solid fa-rectangle-ad"></i> Commercial Break</div>
-                    <i class="fa-solid fa-mug-hot text-6xl text-slate-600 mb-6"></i>
-                    <h3 class="text-2xl font-bold mb-2">Supporting the Broadcaster</h3>
-                    <p class="text-slate-400 text-center max-w-md mb-8">Ads help keep this stream free. Send a Nexus Store gift in chat to instantly skip this ad and earn Ad-Free VIP status!</p>
+                <div id="ad-takeover" class="ad-takeover backdrop-blur-md">
+                    <div class="text-yellow-400 font-bold tracking-widest text-xl uppercase mb-6 animate-pulse"><i class="fa-solid fa-rectangle-ad"></i> Commercial Break</div>
+                    <i class="fa-solid fa-mug-hot text-8xl text-slate-600 mb-8"></i>
+                    <h3 class="text-4xl font-bold mb-4">Supporting the Broadcaster</h3>
+                    <p class="text-slate-300 text-center max-w-xl text-lg mb-12">Ads help keep this stream free. Send a Nexus Store gift in chat to instantly skip this ad and earn Ad-Free VIP status!</p>
                     
-                    <div class="w-64 bg-slate-800 rounded-full h-3 mb-2 overflow-hidden border border-slate-700">
-                        <div id="ad-progress" class="bg-yellow-500 h-full w-0 transition-all duration-1000 ease-linear"></div>
+                    <div class="w-96 bg-slate-800 rounded-full h-4 mb-4 overflow-hidden border border-slate-700 shadow-inner">
+                        <div id="ad-progress" class="bg-yellow-500 h-full w-0 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
                     </div>
-                    <div class="text-sm text-slate-400 font-mono" id="ad-timer-text">30s remaining</div>
-                </div>
-
-                <!-- Streamer Video Overlay Text -->
-                <div id="video-overlay" class="absolute top-6 left-6 glass-panel px-4 py-2 rounded-lg hidden transition-opacity opacity-0">
-                    <h3 id="overlay-title" class="font-bold text-lg text-white"></h3>
-                    <p id="overlay-subtitle" class="text-sm text-gray-300"></p>
+                    <div class="text-lg text-slate-400 font-mono font-bold" id="ad-timer-text">30s remaining</div>
                 </div>
 
                 <!-- Video Controls Bar -->
-                <div id="video-controls" class="absolute bottom-0 left-0 right-0 p-4 pt-12 control-bar flex items-center justify-between z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div class="flex items-center gap-4">
+                <div id="video-controls" class="absolute bottom-0 left-0 right-0 p-4 pt-16 control-bar flex items-center justify-between z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div class="flex items-center gap-6">
                         <button onclick="togglePlayPause()" class="text-white hover:text-indigo-400 transition" id="play-pause-btn">
-                            <i class="fa-solid fa-pause text-xl"></i>
+                            <i class="fa-solid fa-pause text-2xl"></i>
                         </button>
-                        <div class="flex items-center gap-2 group/volume">
-                            <button onclick="toggleMute()" class="text-white hover:text-indigo-400 transition w-6 text-left" id="mute-btn">
+                        <div class="flex items-center gap-3 group/volume">
+                            <button onclick="toggleMute()" class="text-white hover:text-indigo-400 transition w-8 text-left" id="mute-btn">
                                 <i class="fa-solid fa-volume-high text-xl"></i>
                             </button>
-                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="w-0 opacity-0 group-hover/volume:w-24 group-hover/volume:opacity-100 transition-all duration-300">
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="w-0 opacity-0 group-hover/volume:w-28 group-hover/volume:opacity-100 transition-all duration-300">
                         </div>
-                        <div class="text-xs text-white/80 font-mono flex items-center gap-2 ml-2 border border-white/20 bg-black/40 px-2 py-1 rounded shadow-inner">
-                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE
+                        <div class="text-xs text-white font-mono flex items-center gap-2 ml-4 border border-white/20 bg-black/40 px-3 py-1 rounded shadow-inner tracking-widest">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span> LIVE
                         </div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <button onclick="toggleSettings()" class="text-white hover:text-indigo-400 transition" title="Settings">
-                            <i class="fa-solid fa-gear text-lg"></i>
-                        </button>
+                    <div class="flex items-center gap-6">
                         <button onclick="toggleFullscreen()" class="text-white hover:text-indigo-400 transition" title="Fullscreen">
-                            <i class="fa-solid fa-expand text-lg"></i>
+                            <i class="fa-solid fa-expand text-xl"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- Loading Spinner -->
-            <div id="video-loader" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-10 hidden backdrop-blur-md">
-                <div class="w-16 h-16 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(79,70,229,0.5)]"></div>
-                <p class="font-semibold text-lg text-indigo-100 tracking-wide" id="loader-text">Connecting...</p>
-            </div>
-        </div>
-
-        <!-- Chat Area (Right Sidebar) -->
-        <div class="w-80 glass-panel border-l border-slate-700/50 flex flex-col shrink-0 relative z-50 bg-slate-900/95 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] h-full">
-            
-            <!-- Chat Header -->
-            <div class="h-12 border-b border-slate-700/50 flex items-center px-4 justify-between bg-slate-800/40 shrink-0">
-                <span class="font-bold text-gray-200">Live Chat</span>
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-gray-500" id="chat-status-dot"></span>
-                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider" id="chat-status-text">Connecting</span>
+                <div id="video-loader" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-40 hidden backdrop-blur-md">
+                    <div class="w-20 h-20 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(79,70,229,0.5)]"></div>
+                    <p class="font-bold text-xl text-indigo-100 tracking-wide" id="loader-text">Connecting...</p>
+                    <p class="text-sm text-slate-400 mt-2" id="loader-subtext">Waiting for host to accept connection</p>
                 </div>
             </div>
 
-            <!-- Chat Messages Container -->
-            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto chat-scroll flex flex-col gap-3 min-h-0">
-                <div class="text-center text-xs text-slate-500 my-2">Welcome to the stream!</div>
-            </div>
+            <!-- Chat Area (Right Sidebar) - GUARANTEED TO BE SIBLING OF VIDEO AREA -->
+            <div class="w-80 border-l border-slate-700/50 flex flex-col shrink-0 relative z-50 bg-slate-900 h-full shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+                
+                <!-- Chat Header (Fixed Height) -->
+                <div class="h-14 border-b border-slate-700/50 flex items-center px-5 justify-between bg-slate-800/80 shrink-0">
+                    <span class="font-bold text-gray-200 text-lg tracking-wide">Live Chat</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-gray-500 shadow-[0_0_5px_rgba(107,114,128,0.5)]" id="chat-status-dot"></span>
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="chat-status-text">Offline</span>
+                    </div>
+                </div>
 
-            <!-- Gift Toolbar -->
-            <div class="p-3 border-t border-slate-700/50 bg-slate-800/60 grid grid-cols-3 gap-2 shrink-0">
-                <button onclick="sendNexusGift(50)" class="bg-gradient-to-br from-yellow-600/80 to-yellow-800/80 hover:from-yellow-500 hover:to-yellow-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-yellow-500/30 group">
-                    <i class="fa-solid fa-gem text-yellow-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(253,224,71,0.5)]"></i>
-                    <span class="text-[11px] font-bold">50 NC</span>
-                    <span class="text-[9px] text-yellow-200/70">3m No-Ads</span>
-                </button>
-                <button onclick="sendNexusGift(100)" class="bg-gradient-to-br from-emerald-600/80 to-emerald-800/80 hover:from-emerald-500 hover:to-emerald-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-emerald-500/30 group">
-                    <i class="fa-solid fa-rocket text-emerald-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(110,231,183,0.5)]"></i>
-                    <span class="text-[11px] font-bold">100 NC</span>
-                    <span class="text-[9px] text-emerald-200/70">10m No-Ads</span>
-                </button>
-                <button onclick="sendNexusGift(500)" class="bg-gradient-to-br from-purple-600/80 to-purple-800/80 hover:from-purple-500 hover:to-purple-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-purple-500/30 group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-white/20 -skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
-                    <i class="fa-solid fa-crown text-purple-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(216,180,254,0.5)]"></i>
-                    <span class="text-[11px] font-bold">500 NC</span>
-                    <span class="text-[9px] text-purple-200/70">PERM VIP</span>
-                </button>
-            </div>
+                <!-- Chat Messages Container (Flexible Height) -->
+                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto chat-scroll flex flex-col gap-4 min-h-0 relative">
+                    <div class="text-center text-xs text-slate-500 my-4 font-semibold uppercase tracking-widest">Welcome to the chat</div>
+                </div>
 
-            <!-- Input Area -->
-            <div class="p-4 border-t border-slate-700/50 bg-slate-900/90 shrink-0">
-                <form id="chat-form" class="flex gap-2" onsubmit="handleChatSubmit(event)">
-                    <input type="text" id="chat-input" placeholder="Send a message..." class="flex-1 bg-slate-800/80 border border-slate-700/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 transition-all" disabled autocomplete="off">
-                    <button type="submit" id="chat-submit" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-5 py-2.5 transition-all shadow-[0_0_10px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group" disabled>
-                        <i class="fa-solid fa-paper-plane text-sm group-hover:translate-x-1 transition-transform"></i>
+                <!-- Gift Toolbar (Fixed Height) -->
+                <div class="p-3 border-t border-slate-700/50 bg-slate-800/80 grid grid-cols-3 gap-2 shrink-0">
+                    <button onclick="sendNexusGift(50)" class="bg-gradient-to-br from-yellow-600/80 to-yellow-800/80 hover:from-yellow-500 hover:to-yellow-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-yellow-500/30 group shadow-md cursor-pointer">
+                        <i class="fa-solid fa-gem text-yellow-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(253,224,71,0.5)]"></i>
+                        <span class="text-[11px] font-bold text-white">50 NC</span>
+                        <span class="text-[9px] text-yellow-200/90 font-semibold">3m No-Ads</span>
                     </button>
-                </form>
+                    <button onclick="sendNexusGift(100)" class="bg-gradient-to-br from-emerald-600/80 to-emerald-800/80 hover:from-emerald-500 hover:to-emerald-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-emerald-500/30 group shadow-md cursor-pointer">
+                        <i class="fa-solid fa-rocket text-emerald-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(110,231,183,0.5)]"></i>
+                        <span class="text-[11px] font-bold text-white">100 NC</span>
+                        <span class="text-[9px] text-emerald-200/90 font-semibold">10m No-Ads</span>
+                    </button>
+                    <button onclick="sendNexusGift(500)" class="bg-gradient-to-br from-purple-600/80 to-purple-800/80 hover:from-purple-500 hover:to-purple-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-purple-500/30 group relative overflow-hidden shadow-md cursor-pointer">
+                        <div class="absolute inset-0 bg-white/20 -skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
+                        <i class="fa-solid fa-crown text-purple-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(216,180,254,0.5)]"></i>
+                        <span class="text-[11px] font-bold text-white">500 NC</span>
+                        <span class="text-[9px] text-purple-200/90 font-semibold">PERM VIP</span>
+                    </button>
+                </div>
+
+                <!-- Chat Input Area (Fixed Height) -->
+                <div class="p-4 border-t border-slate-700/50 bg-slate-900 shrink-0">
+                    <form id="chat-form" class="flex gap-2" onsubmit="handleChatSubmit(event)">
+                        <input type="text" id="chat-input" placeholder="Send a message..." class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 transition-all text-white placeholder-slate-400" disabled autocomplete="off">
+                        <button type="submit" id="chat-submit" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-5 py-3 transition-all shadow-[0_0_10px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group" disabled>
+                            <i class="fa-solid fa-paper-plane text-base group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
-        // --- DOM ELEMENTS ---
         const DOM = {
             lobbyView: document.getElementById('lobby-view'),
             streamView: document.getElementById('stream-view'),
             video: document.getElementById('main-video'),
-            videoOverlay: document.getElementById('video-overlay'),
-            overlayTitle: document.getElementById('overlay-title'),
-            overlaySubtitle: document.getElementById('overlay-subtitle'),
             loader: document.getElementById('video-loader'),
             loaderText: document.getElementById('loader-text'),
+            loaderSubtext: document.getElementById('loader-subtext'),
             
             liveIndicator: document.getElementById('live-indicator'),
             liveDot: document.getElementById('live-dot'),
@@ -352,24 +348,13 @@
             w2eTimerText: document.getElementById('w2e-timer-text'),
 
             unmuteOverlay: document.getElementById('unmute-overlay'),
-
-            // New Video Controls
             playPauseBtn: document.getElementById('play-pause-btn'),
             muteBtn: document.getElementById('mute-btn'),
             volumeSlider: document.getElementById('volume-slider')
         };
 
-        // --- GLOBAL STATE ---
         const GLOBAL_CHANNEL_ID = "peerstream-global-live-host";
-        const peerConfig = {
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            },
-            debug: 0
-        };
+        const STUN_CONFIG = { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } };
 
         let peer = null;
         let isBroadcaster = false;
@@ -378,65 +363,20 @@
         let connectedPeers = new Map(); 
         
         let localUsername = "User_" + Math.floor(Math.random() * 10000);
+        let nexusBalance = 1250; // Mock balance
 
-        // --- NEXUS CONFIG & STATE ---
-        const NEXUS_CONFIG = {
-            useRealAPI: false, // Set to true to connect to real backend
-            baseUrl: 'http://localhost:3000/v1' 
-        };
-        let nexusToken = "mock_token_123"; 
-        let nexusBalance = 0;
-        let myUserId = "";
-
-        // --- AD & WATCH-TO-EARN STATE ---
+        // Ad System State
         let watchToEarnInterval = null;
-        const W2E_DURATION_SECONDS = 15; // Give coins every 15 seconds
-        const W2E_REWARD_AMOUNT = 10;
-        let w2eRemaining = W2E_DURATION_SECONDS;
-
-        let adIntervalTimer = null;
+        let w2eRemaining = 15;
         let activeAdCountdownTimer = null;
         let adFreeSecondsRemaining = 0;
         let adFreeCountdownTimer = null;
-        const AD_INTERVAL_MINUTES = 3;
-        const AD_DURATION_SECONDS = 30;
         let isAdPlaying = false;
         let permanentAdFree = false;
 
-        // --- WEBRTC HIGH QUALITY SDP MODIFICATION ---
-        // Forces max bitrates for audio (Opus 510kbps) and video (10Mbps)
-        function forceHighQualitySDP(sdp) {
-            if (!sdp) return sdp;
-            let modifiedSdp = sdp;
-            // 1. Force High Audio Bitrate (Opus)
-            modifiedSdp = modifiedSdp.replace(/a=fmtp:111 minptime=10;useinbandfec=1/g, 'a=fmtp:111 minptime=10;useinbandfec=1;maxaveragebitrate=510000;stereo=1');
-            // 2. Force High Video Bitrate (Bandwidth modifiers)
-            modifiedSdp = modifiedSdp.replace(/a=mid:video\r\n/g, 'a=mid:video\r\nb=AS:8000\r\n'); 
-            // 3. Codec tweaks
-            modifiedSdp = modifiedSdp.replace(/a=fmtp:(.*) apt=(.*)\r\n/g, "a=fmtp:$1 apt=$2;x-google-start-bitrate=6000;x-google-max-bitrate=10000;x-google-min-bitrate=2000\r\n");
-            return modifiedSdp;
-        }
-
-        function applyCustomWebRTCConfig(peerInstance) {
-            const originalCreatePeerConnection = peerInstance.options.util.createPeerConnection;
-            peerInstance.options.util.createPeerConnection = function(config, options) {
-               const pc = originalCreatePeerConnection(config, options);
-               const originalSetLocalDescription = pc.setLocalDescription.bind(pc);
-               pc.setLocalDescription = async function(description) {
-                   if (description.type === 'offer' || description.type === 'answer') {
-                       description.sdp = forceHighQualitySDP(description.sdp);
-                   }
-                   return originalSetLocalDescription(description);
-               };
-               return pc;
-            };
-        }
-
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-            let bg = 'bg-slate-800';
-            let border = 'border-slate-700';
-            
+            let bg = 'bg-slate-800', border = 'border-slate-700';
             if (type === 'success') { bg = 'bg-emerald-900/90'; border = 'border-emerald-500'; }
             if (type === 'error') { bg = 'bg-red-900/90'; border = 'border-red-500'; }
             if (type === 'gift') { bg = 'bg-yellow-900/90'; border = 'border-yellow-500'; }
@@ -445,149 +385,53 @@
             toast.innerHTML = message;
             
             DOM.toastContainer.appendChild(toast);
-            
-            setTimeout(() => { toast.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+            setTimeout(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-[-20px]');
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
         }
 
-        function spawnFloatingCoin() {
-            const coin = document.createElement('i');
-            coin.className = 'fa-solid fa-coins coin-drop';
-            
-            // Randomize position near the wallet area
-            const walletRect = DOM.w2eWidget.getBoundingClientRect();
-            const startX = walletRect.left + (Math.random() * 40 - 20);
-            const startY = walletRect.top;
-            
-            coin.style.left = `${startX}px`;
-            coin.style.top = `${startY}px`;
-            
-            document.body.appendChild(coin);
-            setTimeout(() => coin.remove(), 1500);
-        }
-
-        // --- NEXUS API INTEGRATION ---
-        async function connectNexusWallet() {
-            if (!NEXUS_CONFIG.useRealAPI) {
-                // SIMULATED BACKEND
-                myUserId = "usr_" + Math.floor(Math.random()*9000);
-                localUsername = "User_" + Math.floor(Math.random()*9000);
-                nexusBalance = 1250;
-                updateWalletUI();
-                showToast("✅ Connected to Nexus Network (Simulated)", "success");
-                return;
-            }
-
-            try {
-                const response = await fetch(`${NEXUS_CONFIG.baseUrl}/wallet/balance`, {
-                    headers: { 'Authorization': `Bearer ${nexusToken}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    myUserId = data.userId;
-                    localUsername = data.username;
-                    nexusBalance = data.balance;
-                    updateWalletUI();
-                    showToast(`✅ Nexus Wallet Connected: ${localUsername}`, "success");
-                } else {
-                    showToast("❌ Invalid Nexus Token", "error");
-                    DOM.walletUsername.textContent = "Auth Failed";
-                }
-            } catch (err) {
-                console.error("API Error:", err);
-                showToast("❌ Could not connect to Nexus API", "error");
-            }
-        }
-
         function updateWalletUI() {
             DOM.walletUsername.textContent = localUsername;
             DOM.walletBalance.textContent = `${nexusBalance} NC`;
-            DOM.walletBalance.classList.add('scale-110', 'text-white');
-            setTimeout(() => DOM.walletBalance.classList.remove('scale-110', 'text-white'), 300);
         }
 
-        async function sendNexusGift(amount) {
+        function sendNexusGift(amount) {
             if (isBroadcaster) return showToast("Broadcasters cannot gift themselves.", "error");
             if (!hostConnection || !hostConnection.open) return showToast("Not connected to a stream.", "error");
             if (nexusBalance < amount) return showToast("Insufficient Nexus Coins!", "error");
 
-            if (!NEXUS_CONFIG.useRealAPI) {
-                // SIMULATED TRANSACTION
-                processSuccessfulGift(amount, 'tx_sim_' + Math.floor(Math.random()*1000));
-                return;
-            }
-
-            try {
-                const response = await fetch(`${NEXUS_CONFIG.baseUrl}/wallet/gift`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${nexusToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ amount: amount, broadcasterId: GLOBAL_CHANNEL_ID })
-                });
-
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    processSuccessfulGift(amount, data.transactionId);
-                } else {
-                    showToast(`Gift Failed: ${data.message}`, "error");
-                }
-            } catch (err) {
-                console.error("API Error:", err);
-                showToast("Gift transaction failed (Network Error)", "error");
-            }
-        }
-
-        function processSuccessfulGift(amount, txId) {
             nexusBalance -= amount;
             updateWalletUI();
-
-            // Grant Ad-Free Benefits locally based on tier
             grantAdFreeBenefits(amount);
 
-            // Announce in Chat via P2P
-            const giftMsg = {
-                type: 'GIFT',
-                username: localUsername,
-                amount: amount,
-                txId: txId
-            };
+            const giftMsg = { type: 'GIFT', username: localUsername, amount: amount };
             hostConnection.send(giftMsg);
             
-            // Show locally
             appendChatMessage(localUsername, `GIFTED ${amount} COINS! 🎁`, true, amount);
             showToast(`🎁 Gift Sent! (-${amount} NC)`, "success");
         }
 
-        // --- AD & VIP ENGINE ---
         function grantAdFreeBenefits(amount) {
-            if (permanentAdFree) return; // Already perm VIP
-
-            // Instantly kill any active ad
+            if (permanentAdFree) return;
             if (isAdPlaying) {
                 dismissActiveAd();
                 showToast("🚫 Ad Skipped via Gift!", "success");
             }
 
-            // Calculate benefit
             if (amount >= 500) {
                 permanentAdFree = true;
                 adFreeSecondsRemaining = 999999;
                 DOM.adFreeText.textContent = "PERM VIP";
                 DOM.adFreeBadge.classList.replace('text-yellow-400', 'text-purple-400');
                 DOM.adFreeBadge.classList.replace('border-yellow-500/30', 'border-purple-500/50');
-                DOM.adFreeBadge.classList.replace('bg-yellow-500/20', 'bg-purple-500/20');
                 showToast("👑 Permanent Ad-Free Unlocked!", "success");
             } else if (amount >= 100) {
-                adFreeSecondsRemaining += (10 * 60); // 10 mins
+                adFreeSecondsRemaining += (10 * 60);
                 showToast("💎 +10 Mins Ad-Free Unlocked!", "success");
             } else if (amount >= 50) {
-                adFreeSecondsRemaining += (3 * 60); // 3 mins
+                adFreeSecondsRemaining += (3 * 60);
                 showToast("🎁 +3 Mins Ad-Free Unlocked!", "success");
             }
 
@@ -595,7 +439,6 @@
             DOM.adFreeBadge.classList.add('flex');
             
             if (adFreeCountdownTimer) clearInterval(adFreeCountdownTimer);
-            
             if (!permanentAdFree) {
                 adFreeCountdownTimer = setInterval(() => {
                     adFreeSecondsRemaining--;
@@ -603,7 +446,6 @@
                         clearInterval(adFreeCountdownTimer);
                         DOM.adFreeBadge.classList.remove('flex');
                         DOM.adFreeBadge.classList.add('hidden');
-                        showToast("ℹ️ Ad-Free status expired.");
                     } else {
                         const m = Math.floor(adFreeSecondsRemaining / 60);
                         const s = adFreeSecondsRemaining % 60;
@@ -613,30 +455,20 @@
             }
         }
 
-        function startAdScheduler() {
-            if (adIntervalTimer) clearInterval(adIntervalTimer);
-            adIntervalTimer = setInterval(() => {
-                triggerAdBreak();
-            }, AD_INTERVAL_MINUTES * 60 * 1000);
-        }
-
         function triggerAdBreak() {
-            if (isBroadcaster || permanentAdFree || adFreeSecondsRemaining > 0) return; // Immune!
+            if (isBroadcaster || permanentAdFree || adFreeSecondsRemaining > 0) return;
 
             isAdPlaying = true;
             DOM.adTakeover.classList.add('active');
-            let remaining = AD_DURATION_SECONDS;
-            DOM.adProgress.style.width = '100%';
-
+            let remaining = 30;
+            
             if (activeAdCountdownTimer) clearInterval(activeAdCountdownTimer);
             activeAdCountdownTimer = setInterval(() => {
                 remaining--;
                 DOM.adTimerText.textContent = `${remaining}s remaining`;
-                DOM.adProgress.style.width = `${(remaining / AD_DURATION_SECONDS) * 100}%`;
+                DOM.adProgress.style.width = `${(remaining / 30) * 100}%`;
 
-                if (remaining <= 0) {
-                    dismissActiveAd();
-                }
+                if (remaining <= 0) dismissActiveAd();
             }, 1000);
         }
 
@@ -646,45 +478,37 @@
             if (activeAdCountdownTimer) clearInterval(activeAdCountdownTimer);
         }
 
-        // --- WATCH-TO-EARN LOGIC ---
         function startWatchToEarn() {
-            if (isBroadcaster) return; // Host doesn't watch to earn
-            
+            if (isBroadcaster) return;
             DOM.w2eWidget.classList.remove('hidden');
             DOM.w2eWidget.classList.add('flex');
-            w2eRemaining = W2E_DURATION_SECONDS;
-
-            if (watchToEarnInterval) clearInterval(watchToEarnInterval);
             
             watchToEarnInterval = setInterval(() => {
                 w2eRemaining--;
-                DOM.w2eProgressBar.style.width = `${((W2E_DURATION_SECONDS - w2eRemaining) / W2E_DURATION_SECONDS) * 100}%`;
-                
-                const s = w2eRemaining.toString().padStart(2, '0');
-                DOM.w2eTimerText.textContent = `00:${s}`;
+                DOM.w2eProgressBar.style.width = `${((15 - w2eRemaining) / 15) * 100}%`;
+                DOM.w2eTimerText.textContent = `00:${w2eRemaining.toString().padStart(2, '0')}`;
 
                 if (w2eRemaining <= 0) {
-                    rewardWatchTime();
-                    w2eRemaining = W2E_DURATION_SECONDS; // Reset
+                    nexusBalance += 10;
+                    updateWalletUI();
+                    
+                    const coin = document.createElement('i');
+                    coin.className = 'fa-solid fa-coins coin-drop';
+                    const rect = DOM.w2eWidget.getBoundingClientRect();
+                    coin.style.left = `${rect.left + 10}px`;
+                    coin.style.top = `${rect.top}px`;
+                    document.body.appendChild(coin);
+                    setTimeout(() => coin.remove(), 1500);
+
+                    w2eRemaining = 15; // Reset
                 }
             }, 1000);
         }
 
-        function rewardWatchTime() {
-            nexusBalance += W2E_REWARD_AMOUNT;
-            updateWalletUI();
-            spawnFloatingCoin();
-            
-            DOM.w2eProgressBar.classList.add('bg-green-400');
-            setTimeout(() => DOM.w2eProgressBar.classList.remove('bg-green-400'), 500);
-        }
-
-
-        // --- BROADCASTER LOGIC ---
         async function startBroadcast() {
-            showToast("ℹ️ Tip: Check 'Share tab audio' if streaming a browser window.");
+            showToast("ℹ️ Attempting to capture screen & audio...");
 
-            // Smooth View Transition
+            // UI Switch
             DOM.lobbyView.classList.replace('fade-in', 'fade-out');
             setTimeout(() => {
                 DOM.lobbyView.classList.add('hidden');
@@ -693,161 +517,102 @@
             }, 400);
 
             try {
-                // 1. High-Quality Screen Capture (1080p 60fps)
+                // High Quality Screen Capture
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { 
-                        frameRate: { ideal: 60, max: 60 },
-                        width: { ideal: 1920, max: 3840 },
-                        height: { ideal: 1080, max: 2160 },
-                        displaySurface: 'monitor'
-                    },
-                    audio: {
-                        echoCancellation: false,
-                        noiseSuppression: false,
-                        autoGainControl: false,
-                        sampleRate: 48000
-                    }
+                    video: { frameRate: { ideal: 60 } },
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                 });
 
-                // 2. Raw Microphone Capture
+                // High Quality Microphone Processing
                 let micStream = null;
                 try {
                     micStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: false, 
-                            noiseSuppression: false,
-                            autoGainControl: false,
-                            sampleRate: 48000
-                        }
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                     });
-                } catch (err) {
-                    console.warn("No mic found, continuing with screen audio only.");
-                }
+                } catch (e) { console.warn("No mic"); }
 
-                // 3. Web Audio API Mixing (Compressor + Gain)
-                const audioContext = new AudioContext({ sampleRate: 48000 });
-                const dest = audioContext.createMediaStreamDestination();
+                const audioCtx = new AudioContext();
+                const dest = audioCtx.createMediaStreamDestination();
                 
-                // Route screen audio (Bypass compressor so game/music is untouched)
                 if (screenStream.getAudioTracks().length > 0) {
-                    const screenAudioSource = audioContext.createMediaStreamSource(new MediaStream([screenStream.getAudioTracks()[0]]));
-                    screenAudioSource.connect(dest);
+                    audioCtx.createMediaStreamSource(new MediaStream([screenStream.getAudioTracks()[0]])).connect(dest);
                 }
 
-                // Route Mic audio through Compressor & Gain
                 if (micStream && micStream.getAudioTracks().length > 0) {
-                    const micSource = audioContext.createMediaStreamSource(new MediaStream([micStream.getAudioTracks()[0]]));
-                    
-                    // Compressor prevents loud shouting from distorting (clipping)
-                    const compressor = audioContext.createDynamicsCompressor();
-                    compressor.threshold.value = -12; // Start squashing at -12dB
-                    compressor.knee.value = 10;
-                    compressor.ratio.value = 8;       // High ratio to aggressively squash peaks
-                    compressor.attack.value = 0.003;
-                    compressor.release.value = 0.25;
-
-                    // Gain Node to boost the average volume slightly to sit on top of game audio
-                    const micGain = audioContext.createGain();
-                    micGain.gain.value = 1.5; 
-
-                    micSource.connect(compressor);
-                    compressor.connect(micGain);
-                    micGain.connect(dest);
+                    const micSource = audioCtx.createMediaStreamSource(new MediaStream([micStream.getAudioTracks()[0]]));
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    compressor.threshold.value = -12;
+                    compressor.ratio.value = 8;
+                    const gain = audioCtx.createGain();
+                    gain.gain.value = 1.5;
+                    micSource.connect(compressor).connect(gain).connect(dest);
                 }
-
-                // Combine processed audio with original video
-                const videoTrack = screenStream.getVideoTracks()[0];
-                const mixedAudioTracks = dest.stream.getAudioTracks();
                 
-                localStream = new MediaStream([videoTrack, ...mixedAudioTracks]);
+                localStream = new MediaStream([screenStream.getVideoTracks()[0], ...dest.stream.getAudioTracks()]);
 
-                // Handle screen share stop gracefully
-                videoTrack.onended = () => {
-                    location.reload();
-                };
-
-                // UI Updates
+                // Broadcaster Setup
                 isBroadcaster = true;
-                DOM.lobbyView.classList.add('hidden');
-                DOM.streamView.classList.remove('hidden');
-                DOM.roleLabel.innerHTML = '<i class="fa-solid fa-satellite-dish mr-1"></i> HQ Broadcaster <span class="ml-1 text-[8px] bg-indigo-600 px-1 rounded-sm">1080p60</span>';
+                DOM.roleLabel.innerHTML = '<i class="fa-solid fa-satellite-dish mr-1"></i> Host <span class="ml-1 text-[9px] bg-indigo-600 px-1.5 py-0.5 rounded-sm">1080p60</span>';
                 DOM.viewerCountContainer.classList.remove('hidden');
                 
                 DOM.video.srcObject = localStream;
-                DOM.video.muted = true; // MUST BE MUTED LOCALLY to prevent massive echo loop
+                DOM.video.muted = true; // Prevents infinite echo loop locally
 
                 DOM.liveIndicator.classList.remove('hidden');
                 DOM.liveIndicator.classList.add('pulse-green');
                 DOM.liveDot.classList.replace('bg-red-500', 'bg-emerald-500');
 
-                // Init PeerJS Network
-                peer = new Peer(GLOBAL_CHANNEL_ID, peerConfig);
-                applyCustomWebRTCConfig(peer);
-
+                peer = new Peer(GLOBAL_CHANNEL_ID, STUN_CONFIG);
+                
                 peer.on('open', (id) => {
-                    console.log('Broadcaster LIVE:', id);
+                    showToast("🔴 You are now LIVE!", "success");
                     updateChatStatus(true);
                 });
 
                 peer.on('connection', (conn) => {
-                    setupBroadcasterConnection(conn);
+                    conn.on('open', () => {
+                        connectedPeers.set(conn.peer, conn);
+                        DOM.viewerCount.textContent = connectedPeers.size;
+                        peer.call(conn.peer, localStream); // Send video
+                    });
+
+                    conn.on('data', (data) => {
+                        if (data.type === 'CHAT') {
+                            appendChatMessage(data.username, data.message);
+                            broadcastToAll(data);
+                        } else if (data.type === 'GIFT') {
+                            appendChatMessage(data.username, `GIFTED ${data.amount} COINS! 🎁`, true, data.amount);
+                            broadcastToAll(data);
+                            showToast(`⭐ ${data.username} sent ${data.amount} NC!`, 'gift');
+                        }
+                    });
+
+                    conn.on('close', () => {
+                        connectedPeers.delete(conn.peer);
+                        DOM.viewerCount.textContent = connectedPeers.size;
+                    });
                 });
 
                 peer.on('error', (err) => {
-                    console.error('Host Peer Error:', err);
                     if(err.type === 'unavailable-id') {
-                        alert("Someone else is already broadcasting on the global channel!");
-                        location.reload();
+                        showToast("❌ Channel in use! Someone else is broadcasting.", "error");
+                        setTimeout(() => location.reload(), 3000);
                     }
                 });
 
             } catch (err) {
-                console.error("Capture Error: ", err);
-                alert("Failed to start capture. Ensure permissions are granted.");
+                alert("Capture canceled or failed. Reloading...");
+                location.reload();
             }
         }
 
-        function setupBroadcasterConnection(conn) {
-            conn.on('open', () => {
-                connectedPeers.set(conn.peer, conn);
-                updateViewerCount();
-                
-                // Automatically call them back with the stream
-                const call = peer.call(conn.peer, localStream);
-            });
-
-            conn.on('data', (data) => {
-                if (data.type === 'CHAT') {
-                    appendChatMessage(data.username, data.message);
-                    broadcastToAll(data);
-                } else if (data.type === 'GIFT') {
-                    const msg = `GIFTED ${data.amount} COINS! 🎁`;
-                    appendChatMessage(data.username, msg, true, data.amount);
-                    broadcastToAll(data); // Bounce alert to other viewers
-                    
-                    showToast(`⭐ ${data.username} sent ${data.amount} NC!`, 'gift');
-                }
-            });
-
-            conn.on('close', () => {
-                connectedPeers.delete(conn.peer);
-                updateViewerCount();
-            });
-        }
-
         function broadcastToAll(data) {
-            for (let [peerId, conn] of connectedPeers) {
+            for (let [id, conn] of connectedPeers) {
                 if (conn.open) conn.send(data);
             }
         }
 
-        function updateViewerCount() {
-            DOM.viewerCount.textContent = connectedPeers.size;
-        }
-
-        // --- VIEWER LOGIC ---
         function tuneIn() {
-            // Smooth View Transition
             DOM.lobbyView.classList.replace('fade-in', 'fade-out');
             setTimeout(() => {
                 DOM.lobbyView.classList.add('hidden');
@@ -856,34 +621,34 @@
                 DOM.loader.classList.remove('hidden');
             }, 400);
             
-            DOM.loaderText.textContent = "Finding Broadcast...";
             DOM.liveIndicator.classList.remove('hidden');
+            
+            // Connection Timeout Safety
+            let connTimeout = setTimeout(() => {
+                DOM.loaderText.textContent = "Stream Offline";
+                DOM.loaderSubtext.textContent = "Did you remember to 'Go Live' in another tab first?";
+                DOM.loader.querySelector('i')?.classList.replace('fa-spin', 'opacity-50');
+            }, 10000);
 
-            peer = new Peer(peerConfig);
-            applyCustomWebRTCConfig(peer);
+            peer = new Peer(STUN_CONFIG);
 
             peer.on('open', (id) => {
-                DOM.loaderText.textContent = "Connecting to Host...";
-                
-                // Connect to host chat/data channel
                 hostConnection = peer.connect(GLOBAL_CHANNEL_ID, { reliable: true });
 
                 hostConnection.on('open', () => {
+                    clearTimeout(connTimeout);
                     updateChatStatus(true);
-                    DOM.roleLabel.innerHTML = '<i class="fa-solid fa-users-viewfinder mr-1"></i> HQ Viewer <span class="ml-1 text-[8px] bg-emerald-600 px-1 rounded-sm">Source</span>';
+                    DOM.roleLabel.innerHTML = '<i class="fa-solid fa-users-viewfinder mr-1"></i> Viewer <span class="ml-1 text-[9px] bg-emerald-600 px-1.5 py-0.5 rounded-sm">Source</span>';
                     DOM.liveDot.classList.replace('bg-red-500', 'bg-emerald-500');
                     DOM.liveIndicator.classList.add('pulse-green');
                     
                     startWatchToEarn();
-                    startAdScheduler();
+                    setInterval(triggerAdBreak, 3 * 60 * 1000); // Ad every 3 mins
                 });
 
                 hostConnection.on('data', (data) => {
-                    if (data.type === 'CHAT') {
-                        appendChatMessage(data.username, data.message);
-                    } else if (data.type === 'GIFT') {
-                        appendChatMessage(data.username, `GIFTED ${data.amount} COINS! 🎁`, true, data.amount);
-                    }
+                    if (data.type === 'CHAT') appendChatMessage(data.username, data.message);
+                    else if (data.type === 'GIFT') appendChatMessage(data.username, `GIFTED ${data.amount} COINS! 🎁`, true, data.amount);
                 });
 
                 hostConnection.on('close', () => {
@@ -892,30 +657,27 @@
                 });
             });
 
-            // Answer incoming stream from Host
             peer.on('call', (call) => {
-                call.answer(); // Automatically answer without pushing our own media
-                
+                clearTimeout(connTimeout);
+                call.answer(); 
                 call.on('stream', (remoteStream) => {
                     DOM.loader.classList.add('hidden');
                     DOM.video.srcObject = remoteStream;
                     
-                    // Handle Autoplay Policies
                     DOM.video.play().catch(e => {
-                        console.warn("Autoplay blocked by browser. Showing unmute overlay.", e);
                         DOM.video.muted = true;
                         DOM.unmuteOverlay.classList.remove('hidden');
-                        DOM.video.play(); // Play muted immediately so video shows
+                        DOM.video.play(); 
                     });
                 });
             });
 
             peer.on('error', (err) => {
-                console.error("Viewer Error:", err);
                 if (err.type === 'peer-unavailable') {
+                    clearTimeout(connTimeout);
                     DOM.loaderText.textContent = "Host is Offline";
-                    DOM.loader.querySelector('i').classList.replace('fa-circle-notch', 'fa-satellite-dish');
-                    DOM.loader.querySelector('i').classList.replace('fa-spin', 'opacity-50');
+                    DOM.loaderSubtext.textContent = "Make sure the broadcaster is live in another tab!";
+                    DOM.loader.querySelector('div').classList.add('hidden'); // hide spinner
                 }
             });
         }
@@ -927,67 +689,42 @@
             updateMuteIcon();
         }
 
-        // --- VIDEO CONTROLS LOGIC ---
         function togglePlayPause() {
-            if (DOM.video.paused) {
-                DOM.video.play();
-                DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause text-xl"></i>';
-            } else {
-                DOM.video.pause();
-                DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-xl"></i>';
-            }
+            if (DOM.video.paused) { DOM.video.play(); DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause text-2xl"></i>'; } 
+            else { DOM.video.pause(); DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-2xl"></i>'; }
         }
 
         function toggleMute() {
             DOM.video.muted = !DOM.video.muted;
-            if (DOM.video.muted) {
-                DOM.volumeSlider.value = 0;
-            } else {
-                DOM.volumeSlider.value = DOM.video.volume > 0 ? DOM.video.volume : 1;
-            }
+            DOM.volumeSlider.value = DOM.video.muted ? 0 : (DOM.video.volume > 0 ? DOM.video.volume : 1);
             updateMuteIcon();
         }
 
         function updateMuteIcon() {
-            if (DOM.video.muted || DOM.video.volume === 0) {
-                DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-xl text-red-400"></i>';
-            } else if (DOM.video.volume < 0.5) {
-                DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-low text-xl"></i>';
-            } else {
-                DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xl"></i>';
-            }
+            if (DOM.video.muted || DOM.video.volume === 0) DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-xl text-red-400"></i>';
+            else if (DOM.video.volume < 0.5) DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-low text-xl"></i>';
+            else DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xl"></i>';
         }
 
         DOM.volumeSlider?.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            DOM.video.volume = val;
-            DOM.video.muted = val === 0;
+            DOM.video.volume = parseFloat(e.target.value);
+            DOM.video.muted = DOM.video.volume === 0;
             updateMuteIcon();
         });
 
         function toggleFullscreen() {
-            const container = DOM.video.parentElement;
-            if (!document.fullscreenElement) {
-                if (container.requestFullscreen) container.requestFullscreen();
-                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            }
-        }
-        
-        function toggleSettings() {
-            showToast("Video settings panel coming soon!", "info");
+            const el = DOM.video.parentElement;
+            if (!document.fullscreenElement) el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
+            else document.exitFullscreen?.() || document.webkitExitFullscreen?.();
         }
 
-        // --- CHAT LOGIC ---
         function updateChatStatus(isOnline) {
             if (isOnline) {
                 DOM.chatStatusDot.classList.replace('bg-gray-500', 'bg-emerald-500');
-                DOM.chatStatusText.textContent = "Connected";
+                DOM.chatStatusDot.classList.add('shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+                DOM.chatStatusText.textContent = "Online";
                 DOM.chatStatusText.classList.replace('text-gray-400', 'text-emerald-400');
-                DOM.chatInput.disabled = false;
-                DOM.chatSubmit.disabled = false;
+                DOM.chatInput.disabled = false; DOM.chatSubmit.disabled = false;
             } else {
                 DOM.chatStatusDot.classList.replace('bg-emerald-500', 'bg-red-500');
                 DOM.chatStatusText.textContent = "Offline";
@@ -999,51 +736,37 @@
             const text = DOM.chatInput.value.trim();
             if (!text) return;
 
-            const msgData = {
-                type: 'CHAT',
-                username: localUsername,
-                message: text
-            };
-
+            const msgData = { type: 'CHAT', username: localUsername, message: text };
             if (isBroadcaster) {
                 appendChatMessage(localUsername, text);
                 broadcastToAll(msgData);
-            } else {
-                if (hostConnection && hostConnection.open) {
-                    hostConnection.send(msgData);
-                    appendChatMessage(localUsername, text);
-                }
+            } else if (hostConnection?.open) {
+                hostConnection.send(msgData);
+                appendChatMessage(localUsername, text);
             }
-
             DOM.chatInput.value = '';
         }
 
         function appendChatMessage(username, message, isGift = false, amount = 0) {
             const msgDiv = document.createElement('div');
-            msgDiv.className = 'text-sm animate-[fadeIn_0.2s_ease-in-out] break-words';
+            msgDiv.className = 'text-[13px] animate-[fadeIn_0.2s_ease-in-out] break-words leading-relaxed';
             
             if (isGift) {
-                msgDiv.className += ' bg-yellow-900/30 border border-yellow-500/50 p-2 rounded-md shadow-sm';
-                let tierIcon = '🎁';
-                if (amount >= 100) tierIcon = '💎';
-                if (amount >= 500) tierIcon = '👑';
-                
-                msgDiv.innerHTML = `<span class="font-bold text-yellow-400">${tierIcon} ${username}</span> <span class="text-yellow-100 font-semibold">${message}</span>`;
+                msgDiv.className += ' bg-yellow-500/10 border border-yellow-500/30 p-2.5 rounded-lg shadow-sm';
+                let tier = '🎁';
+                if (amount >= 100) tier = '💎';
+                if (amount >= 500) tier = '👑';
+                msgDiv.innerHTML = `<span class="font-bold text-yellow-400 tracking-wide">${tier} ${username}</span> <span class="text-yellow-100/90 font-medium ml-1">${message}</span>`;
             } else {
-                const isMe = username === localUsername;
-                const nameColor = isMe ? 'text-indigo-400' : 'text-emerald-400';
-                msgDiv.innerHTML = `<span class="font-bold ${nameColor}">${username}:</span> <span class="text-gray-200">${message}</span>`;
+                const nameColor = username === localUsername ? 'text-indigo-400' : 'text-emerald-400';
+                msgDiv.innerHTML = `<span class="font-bold ${nameColor} tracking-wide">${username}</span><span class="text-gray-400 mx-1">:</span><span class="text-gray-200">${message}</span>`;
             }
 
             DOM.chatMessages.appendChild(msgDiv);
             DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
         }
 
-        // --- INIT ---
-        window.onload = () => {
-            connectNexusWallet();
-        };
-
+        window.onload = updateWalletUI;
     </script>
 </body>
 </html>
