@@ -198,25 +198,32 @@
                     <p id="overlay-text" class="text-sm font-medium">Connecting to stream network...</p>
                 </div>
 
-                <!-- STREAM ADVERTS OVERLAY (Twitch-Style Ad Roll) -->
-                <div id="ad-overlay" class="hidden absolute bottom-6 left-6 z-30 max-w-md w-full bg-slate-900/90 border border-amber-500/40 rounded-2xl p-4 backdrop-blur-xl shadow-2xl animate-slide-up pointer-events-auto">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider">Ad Break</span>
-                            <span id="ad-sponsor-title" class="text-xs font-bold text-white chat-text-shadow">Nexus Gear Pro Wireless</span>
+                <!-- STREAM ADVERTS OVERLAY (Full Screen Ad Takeover) -->
+                <div id="ad-overlay" class="hidden absolute inset-0 z-[25] bg-slate-950/95 flex flex-col items-center justify-center p-8 backdrop-blur-2xl pointer-events-auto text-center animate-slide-up">
+                    
+                    <!-- Top Right Countdown -->
+                    <div class="absolute top-6 right-6 flex items-center gap-3">
+                        <span class="px-3 py-1 rounded bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-wider">Ad Break</span>
+                        <span id="ad-timer-countdown" class="text-2xl font-mono font-bold text-amber-400">15s</span>
+                    </div>
+
+                    <i class="fa-solid fa-rectangle-ad text-6xl text-amber-500/80 mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"></i>
+                    
+                    <h2 id="ad-sponsor-title" class="text-4xl font-extrabold text-white mb-3 chat-text-shadow">Nexus Gear Pro Wireless</h2>
+                    <p id="ad-sponsor-desc" class="text-lg text-slate-300 max-w-2xl mb-10">Upgrade your gaming setup with low-latency WebRTC streaming controllers.</p>
+                    
+                    <div class="w-full max-w-lg bg-slate-900/50 p-6 rounded-2xl border border-white/10 flex flex-col items-center gap-5">
+                        <!-- Ad Progress Bar -->
+                        <div class="w-full bg-slate-950/80 rounded-full h-2.5 overflow-hidden border border-white/5 shadow-inner">
+                            <div id="ad-progress-bar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full w-full transition-all duration-1000 ease-linear"></div>
                         </div>
-                        <span id="ad-timer-countdown" class="text-xs font-mono font-bold text-amber-400">15s</span>
-                    </div>
-                    <p id="ad-sponsor-desc" class="text-xs text-slate-300 mb-3">Upgrade your gaming setup with low-latency WebRTC streaming controllers.</p>
-                    <div class="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
-                        <span class="text-[10px] text-slate-400">Gift Nexus Coins to remove ads!</span>
-                        <button onclick="showToast('🎁 Gift NC in chat to skip ads!')" class="px-2.5 py-1 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 text-[10px] font-bold transition-all">
-                            ⚡ Skip with Gift
-                        </button>
-                    </div>
-                    <!-- Ad Progress Bar -->
-                    <div class="w-full bg-slate-950/80 rounded-full h-1 mt-2 overflow-hidden border border-white/5">
-                        <div id="ad-progress-bar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full w-full transition-all duration-1000 ease-linear"></div>
+                        
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-sm text-slate-400 font-medium">Gift coins in chat to skip!</span>
+                            <button onclick="showToast('🎁 Gift NC in chat to skip ads!')" class="px-4 py-2 rounded-xl bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 text-sm font-bold transition-all flex items-center gap-2">
+                                ⚡ Skip with Gift
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -455,10 +462,16 @@
                     audio: true // System / browser tab audio
                 });
 
-                // 2. Capture Microphone Audio
+                // 2. Capture Microphone Audio with strict Echo Cancellation
                 let micStream = null;
                 try {
-                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    micStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        }
+                    });
                 } catch (micErr) {
                     console.warn("Microphone access denied or not found. Continuing with screen audio only.", micErr);
                 }
@@ -506,9 +519,10 @@
             DOM.roleLabel.innerHTML = '<i class="fa-solid fa-satellite-dish mr-1"></i> Broadcaster';
             DOM.viewerCountContainer.classList.remove('hidden');
             
-            // Set local preview video
+            // Set local preview video and strictly mute to prevent local feedback loop
             DOM.video.srcObject = localStream;
-            DOM.video.muted = true; // Avoid feedback loop locally
+            DOM.video.muted = true; 
+            DOM.video.volume = 0;
             setVideoOverlay('', '', false);
 
             // Register Host Peer with Fixed Global ID
@@ -586,6 +600,8 @@
                 call.on('stream', (remoteStream) => {
                     console.log("Stream successfully received!");
                     DOM.video.srcObject = remoteStream;
+                    DOM.video.muted = false; // Ensure viewer CAN hear the stream
+                    DOM.video.volume = 1.0;
                     setVideoOverlay('', '', false); // Hide the loading overlay!
                 });
 
