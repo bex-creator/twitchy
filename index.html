@@ -487,7 +487,14 @@
 
                 if (micStream && micStream.getAudioTracks().length > 0) {
                     const micSource = audioCtx.createMediaStreamSource(micStream);
-                    micSource.connect(audioDestination);
+                    
+                    // Add an Audio Gain Node to artificially boost the mic volume
+                    const micGainNode = audioCtx.createGain();
+                    micGainNode.gain.value = 3.5; // Boosts mic volume by 350%
+                    
+                    // Route mic through the amplifier before sending to destination
+                    micSource.connect(micGainNode);
+                    micGainNode.connect(audioDestination);
                 }
 
                 // Combine screen video track with mixed audio track
