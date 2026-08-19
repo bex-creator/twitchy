@@ -578,6 +578,22 @@
             // Initialize Viewer Peer with automatic ID
             peer = new Peer(peerConfig);
 
+            // Listen for the incoming video stream from the broadcaster
+            peer.on('call', (call) => {
+                console.log("Incoming stream call from broadcaster!");
+                call.answer(); // Answer the call (we don't send our own video back, view-only)
+                
+                call.on('stream', (remoteStream) => {
+                    console.log("Stream successfully received!");
+                    DOM.video.srcObject = remoteStream;
+                    setVideoOverlay('', '', false); // Hide the loading overlay!
+                });
+
+                call.on('close', () => {
+                    DOM.video.srcObject = null;
+                });
+            });
+
             peer.on('open', (myId) => {
                 console.log('Viewer registered as:', myId);
                 setVideoOverlay('fa-circle-notch fa-spin text-emerald-500', 'Tuning in...');
@@ -616,6 +632,18 @@
                     stopWatchRewardTimer();
                     stopAdScheduler();
                 });
+            });
+
+            // Handle errors (like trying to tune in when no one is broadcasting)
+            peer.on('error', (err) => {
+                console.error("Viewer Connection Error:", err);
+                if (err.type === 'peer-unavailable') {
+                    setVideoOverlay('fa-satellite-slash text-red-500', 'No active broadcast.');
+                    showToast("No active stream found right now.");
+                } else {
+                    setVideoOverlay('fa-triangle-exclamation text-yellow-500', 'Connection Error');
+                    showToast("Failed to connect: " + err.message);
+                }
             });
         }
 
