@@ -1,49 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeerStream HQ</title>
+    <title>PeerStream Pro - Next-Gen Live Streaming</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            overflow: hidden;
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-sizing: border-box;
         }
 
-        .premium-bg {
-            background: radial-gradient(circle at top right, #1e1b4b, #020617, #020617);
-        }
+        /* Custom Scrollbar for Chat */
+        .chat-scroll::-webkit-scrollbar { width: 5px; }
+        .chat-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 4px; }
+        .chat-scroll::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.6); }
 
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.85);
+        /* Glassmorphism Accents */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .chat-scroll::-webkit-scrollbar { width: 6px; }
-        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
-        .chat-scroll::-webkit-scrollbar-thumb { background-color: rgba(148, 163, 184, 0.3); border-radius: 10px; }
+        .glass-card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-hover:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px -10px rgba(79, 70, 229, 0.3);
+        }
 
-        .pulse-green { animation: pulseGreen 2s infinite; }
+        /* Pulsing Status Indicators */
+        .pulse-emerald { animation: pulseGreen 2s infinite; }
         @keyframes pulseGreen {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        /* Fullscreen Ad Overlay */
+        /* Fullscreen Takeover Ad Overlay */
         .ad-takeover {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 40;
+            background: rgba(2, 6, 23, 0.96);
+            z-index: 45;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -57,114 +65,103 @@
             pointer-events: auto;
         }
 
-        /* Coin Drop Animation */
-        .coin-drop {
-            position: absolute;
-            font-size: 24px;
-            color: #fbbf24;
+        /* Floating Coin Animation */
+        .coin-pop {
+            position: fixed;
+            font-size: 22px;
+            color: #f59e0b;
             pointer-events: none;
-            z-index: 60;
-            animation: floatUp 1.5s ease-out forwards;
+            z-index: 100;
+            animation: coinFloat 1.2s ease-out forwards;
+        }
+        @keyframes coinFloat {
+            0% { transform: translateY(0) scale(0.8); opacity: 1; }
+            50% { transform: translateY(-40px) scale(1.3); opacity: 0.9; }
+            100% { transform: translateY(-80px) scale(1); opacity: 0; }
         }
 
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        /* Audio Meter Visualizer Bar */
+        .vu-bar {
+            transition: width 0.05s ease-out;
         }
 
-        .glass-button {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
-        }
-        .glass-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(99, 102, 241, 0.5);
-            transform: translateY(-2px);
-        }
-        .control-bar {
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-        }
-        
-        /* Video Player Range Slider */
+        /* Range Input Styling */
         input[type=range] {
             -webkit-appearance: none;
-            width: 100%;
             background: transparent;
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
+            height: 14px;
+            width: 14px;
             border-radius: 50%;
-            background: #818cf8;
+            background: #6366f1;
             cursor: pointer;
-            margin-top: -4px;
-            box-shadow: 0 0 10px rgba(129, 140, 248, 0.8);
+            margin-top: -5px;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
-            cursor: pointer;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 2px;
         }
-        
-        .fade-transition {
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .fade-out { opacity: 0; transform: scale(0.98); pointer-events: none; }
-        .fade-in { opacity: 1; transform: scale(1); pointer-events: auto; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col premium-bg">
+<body class="h-full w-full bg-slate-950 text-slate-100 flex flex-col overflow-hidden antialiased select-none">
 
-    <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
 
-    <!-- Header / Navbar -->
-    <header class="h-16 glass-panel border-b border-slate-700/50 flex items-center justify-between px-6 z-50 relative shrink-0 shadow-lg">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-lg shadow-[0_0_15px_rgba(79,70,229,0.5)]">
-                <i class="fa-solid fa-play"></i>
+    <header class="h-16 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between px-6 z-40 shrink-0 shadow-lg backdrop-blur-md">
+        <!-- Logo & Stream Status -->
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2.5 cursor-pointer" onclick="location.reload()">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-black text-lg shadow-[0_0_20px_rgba(79,70,229,0.4)]">
+                    <i class="fa-solid fa-play text-white text-sm"></i>
+                </div>
+                <span class="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">
+                    PeerStream <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-bold uppercase tracking-wider">PRO</span>
+                </span>
             </div>
-            <h1 class="font-bold text-2xl tracking-tight">PeerStream <span class="text-indigo-400 font-normal">HQ</span></h1>
-            
-            <!-- Live Status Indicator -->
-            <div id="live-indicator" class="ml-4 flex items-center gap-2 hidden bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
-                <div class="w-2.5 h-2.5 rounded-full bg-red-500" id="live-dot"></div>
-                <span id="role-label" class="text-xs font-semibold text-gray-200 uppercase tracking-wider">Lobby</span>
+
+            <!-- Live Session Badge -->
+            <div id="live-indicator" class="hidden items-center gap-2 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700/80">
+                <span id="live-dot" class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                <span id="role-label" class="text-xs font-bold uppercase tracking-wider text-slate-300">Lobby</span>
                 
                 <!-- Ad Free VIP Badge -->
-                <div id="ad-free-badge" class="ml-2 hidden items-center gap-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-                    <i class="fa-solid fa-crown"></i> <span id="ad-free-text">Ad-Free</span>
+                <div id="ad-free-badge" class="hidden items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase">
+                    <i class="fa-solid fa-crown text-[9px]"></i> <span id="ad-free-text">Ad-Free</span>
                 </div>
             </div>
         </div>
 
+        <!-- Right Side Widgets -->
         <div class="flex items-center gap-4">
             <!-- Watch-to-Earn Widget -->
-            <div id="w2e-widget" class="hidden flex-col items-end mr-4">
-                <div class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Watch & Earn</div>
-                <div class="flex items-center gap-2 bg-slate-800 border border-slate-600 rounded-full px-2 py-1 h-6 w-32 relative overflow-hidden">
-                    <div id="w2e-progress-bar" class="absolute left-0 top-0 bottom-0 bg-green-500/30 w-0 transition-all duration-1000 ease-linear"></div>
-                    <i class="fa-solid fa-coins text-yellow-400 text-xs z-10"></i>
-                    <span id="w2e-timer-text" class="text-xs font-semibold text-slate-300 z-10 w-full text-center">00:15</span>
+            <div id="w2e-widget" class="hidden flex-col items-end">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Watch Rewards</span>
+                <div class="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 rounded-full px-3 py-1 h-7 w-36 relative overflow-hidden shadow-inner">
+                    <div id="w2e-progress-bar" class="absolute left-0 top-0 bottom-0 bg-emerald-500/30 w-0 transition-all duration-1000 ease-linear"></div>
+                    <i class="fa-solid fa-coins text-amber-400 text-xs z-10"></i>
+                    <span id="w2e-timer-text" class="text-xs font-bold text-slate-200 z-10 w-full text-center">00:15</span>
                 </div>
             </div>
 
-            <!-- Viewer Count -->
-            <div id="viewer-count-container" class="hidden items-center gap-2 text-gray-300 bg-slate-800/80 px-4 py-1.5 rounded-full text-sm border border-slate-700">
+            <!-- Viewer Counter -->
+            <div id="viewer-count-container" class="hidden items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-300">
                 <i class="fa-solid fa-eye text-indigo-400"></i>
-                <span id="viewer-count" class="font-semibold">0</span>
+                <span id="viewer-count">1</span>
             </div>
 
-            <!-- Nexus Wallet Integration -->
-            <div class="flex items-center gap-3 bg-slate-800/80 border border-slate-600 rounded-lg px-4 py-2 shadow-inner">
-                <i class="fa-solid fa-wallet text-indigo-400 text-lg"></i>
+            <!-- Nexus Wallet Header Display -->
+            <div class="flex items-center gap-3 bg-slate-800/90 border border-slate-700/80 rounded-xl px-3.5 py-1.5 shadow-sm">
+                <div class="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+                    <i class="fa-solid fa-wallet text-amber-400 text-xs"></i>
+                </div>
                 <div class="flex flex-col">
-                    <span class="text-[10px] text-gray-400 uppercase leading-none font-semibold tracking-wider" id="wallet-username">Not Connected</span>
-                    <span class="text-sm font-bold leading-none mt-1 text-yellow-400 tracking-wide" id="wallet-balance">-- NC</span>
+                    <span id="wallet-username" class="text-[10px] text-slate-400 font-bold uppercase leading-none">Connecting...</span>
+                    <span id="wallet-balance" class="text-xs font-extrabold text-amber-400 leading-tight mt-0.5">-- NC</span>
                 </div>
             </div>
         </div>
@@ -172,139 +169,221 @@
 
     <main class="flex-1 relative w-full flex overflow-hidden">
         
-        <!-- Lobby View (Initial State) -->
-        <div id="lobby-view" class="absolute inset-0 flex flex-col items-center justify-center z-20 fade-transition fade-in bg-slate-900/50">
-            <!-- Decorative Blobs -->
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+        <!-- ================= LOBBY VIEW ================= -->
+        <div id="lobby-view" class="absolute inset-0 flex flex-col items-center justify-center z-30 bg-slate-950 p-6 overflow-y-auto">
+            <!-- Background Glow FX -->
+            <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none"></div>
 
-            <div class="glass-panel p-12 rounded-2xl border border-slate-700/50 shadow-2xl max-w-xl w-full text-center relative z-10">
-                <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-8 border border-indigo-400/30">
-                    <i class="fa-solid fa-satellite-dish text-5xl text-white"></i>
+            <div class="glass-card p-8 md:p-10 rounded-3xl max-w-2xl w-full text-center relative z-10 shadow-2xl border border-slate-800">
+                <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 rounded-3xl mx-auto flex items-center justify-center shadow-xl shadow-indigo-600/30 mb-6 border border-indigo-400/30">
+                    <i class="fa-solid fa-broadcast-tower text-3xl text-white"></i>
                 </div>
-                <h2 class="text-4xl font-bold mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">PeerStream Studio</h2>
-                <p class="text-slate-400 text-base mb-12 leading-relaxed">Broadcast to the world with ultra-low latency WebRTC, or tune into a high-fidelity peer-to-peer stream.</p>
-                
-                <div class="grid grid-cols-2 gap-6">
-                    <button onclick="startBroadcast()" class="group relative bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-5 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] overflow-hidden flex flex-col items-center gap-3 border border-indigo-400/50">
-                        <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-                        <i class="fa-solid fa-video text-3xl z-10"></i>
-                        <span class="z-10 text-lg">Go Live</span>
+
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-indigo-200">
+                    Studio Broadcast HQ
+                </h1>
+                <p class="text-slate-400 text-sm md:text-base max-w-lg mx-auto mb-8 leading-relaxed">
+                    Ultra-low latency P2P live streaming engine with 48kHz stereo sound, dynamic audio limiting, built-in chat, and watch rewards.
+                </p>
+
+                <!-- Studio Options Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <!-- Option 1: Go Live -->
+                    <button onclick="startBroadcast()" class="glass-card glass-card-hover p-5 rounded-2xl flex flex-col items-center gap-3 text-left bg-gradient-to-b from-indigo-600/30 to-slate-900/80 border-indigo-500/30 group">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-video"></i>
+                        </div>
+                        <div class="text-center">
+                            <h2 class="font-bold text-base text-white">Go Live</h2>
+                            <p class="text-xs text-slate-400 mt-1">Share Screen & Mic in HD 60FPS</p>
+                        </div>
                     </button>
-                    <button onclick="tuneIn()" class="glass-button text-white font-semibold py-5 px-6 rounded-xl flex flex-col items-center gap-3 hover:bg-slate-800/80">
-                        <i class="fa-solid fa-desktop text-3xl text-indigo-400 drop-shadow-[0_0_10px_rgba(129,140,248,0.5)]"></i>
-                        <span class="text-lg">Watch Stream</span>
+
+                    <!-- Option 2: Watch Stream -->
+                    <button onclick="tuneIn()" class="glass-card glass-card-hover p-5 rounded-2xl flex flex-col items-center gap-3 text-left group">
+                        <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400 text-xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-desktop"></i>
+                        </div>
+                        <div class="text-center">
+                            <h2 class="font-bold text-base text-white">Watch Stream</h2>
+                            <p class="text-xs text-slate-400 mt-1">Connect to active Broadcaster</p>
+                        </div>
+                    </button>
+
+                    <!-- Option 3: Instant Interactive Demo -->
+                    <button onclick="startDemoStream()" class="glass-card glass-card-hover p-5 rounded-2xl flex flex-col items-center gap-3 text-left bg-gradient-to-b from-emerald-600/20 to-slate-900/80 border-emerald-500/30 group">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="text-center">
+                            <h2 class="font-bold text-base text-white">1-Click Demo</h2>
+                            <p class="text-xs text-slate-400 mt-1">Instant test with audio & chat</p>
+                        </div>
                     </button>
                 </div>
-                
-                <!-- Helper Note -->
-                <div class="mt-8 text-xs text-slate-500 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-circle-info"></i> To test P2P, open a second tab and "Go Live" there first!
+
+                <!-- Helper Tip -->
+                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-center gap-2 text-xs text-slate-400">
+                    <i class="fa-solid fa-circle-info text-indigo-400"></i>
+                    <span>Testing P2P live mode? Open a 2nd browser window to "Go Live" there first!</span>
                 </div>
             </div>
         </div>
 
-        <!-- Stream View (Active Broadcast) -->
-        <div id="stream-view" class="hidden absolute inset-0 flex fade-transition fade-out z-10 bg-black">
+        <!-- ================= STREAM VIEW ================= -->
+        <div id="stream-view" class="hidden absolute inset-0 flex w-full h-full bg-slate-950">
             
-            <!-- Video Area (Left) -->
-            <div class="flex-1 relative bg-black flex items-center justify-center overflow-hidden group">
-                <video id="main-video" class="w-full h-full object-contain" autoplay playsinline></video>
+            <!-- Video Area (Flexible Left Side) -->
+            <div class="flex-1 relative bg-black flex flex-col items-center justify-center overflow-hidden group">
                 
-                <!-- Unmute Overlay (For browser autoplay policies) -->
-                <div id="unmute-overlay" class="absolute inset-0 bg-black/80 flex items-center justify-center hidden z-30 backdrop-blur-sm">
-                    <button onclick="unmuteStream()" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-xl font-bold text-2xl flex items-center gap-4 animate-bounce shadow-[0_0_30px_rgba(79,70,229,0.5)]">
-                        <i class="fa-solid fa-volume-high"></i> Click to Unmute Stream
+                <!-- Main Stream Video Element -->
+                <video id="main-video" class="w-full h-full object-contain" autoplay playsinline></video>
+                <canvas id="demo-canvas" class="hidden w-full h-full object-contain"></canvas>
+
+                <!-- Unmute Overlay (Catches Autoplay Blocks) -->
+                <div id="unmute-overlay" class="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center hidden z-30 backdrop-blur-md">
+                    <button onclick="unmuteStream()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-bold text-xl flex items-center gap-3 animate-bounce shadow-[0_0_30px_rgba(79,70,229,0.5)] transition">
+                        <i class="fa-solid fa-volume-high"></i> Click to Unmute Live Audio
                     </button>
+                    <p class="text-sm text-slate-400 mt-4">Browser policy requires 1-click to activate sound</p>
                 </div>
 
                 <!-- FULLSCREEN AD TAKEOVER OVERLAY -->
-                <div id="ad-takeover" class="ad-takeover backdrop-blur-md">
-                    <div class="text-yellow-400 font-bold tracking-widest text-xl uppercase mb-6 animate-pulse"><i class="fa-solid fa-rectangle-ad"></i> Commercial Break</div>
-                    <i class="fa-solid fa-mug-hot text-8xl text-slate-600 mb-8"></i>
-                    <h3 class="text-4xl font-bold mb-4">Supporting the Broadcaster</h3>
-                    <p class="text-slate-300 text-center max-w-xl text-lg mb-12">Ads help keep this stream free. Send a Nexus Store gift in chat to instantly skip this ad and earn Ad-Free VIP status!</p>
+                <div id="ad-takeover" class="ad-takeover backdrop-blur-xl">
+                    <div class="text-amber-400 font-extrabold tracking-widest text-sm uppercase mb-4 flex items-center gap-2 animate-pulse">
+                        <i class="fa-solid fa-rectangle-ad text-lg"></i> Commercial Break
+                    </div>
+                    <div class="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-6 text-slate-500 text-4xl shadow-2xl">
+                        <i class="fa-solid fa-mug-hot"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-white mb-2 text-center">Supporting Broadcaster</h2>
+                    <p class="text-slate-400 text-center max-w-md text-sm mb-8 leading-relaxed">
+                        Send a gift in live chat to instantly skip this ad and unlock <span class="text-amber-400 font-bold">Ad-Free Immunity</span>!
+                    </p>
                     
-                    <div class="w-96 bg-slate-800 rounded-full h-4 mb-4 overflow-hidden border border-slate-700 shadow-inner">
-                        <div id="ad-progress" class="bg-yellow-500 h-full w-0 transition-all duration-1000 ease-linear shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
+                    <div class="w-80 bg-slate-900 rounded-full h-3 mb-3 overflow-hidden border border-slate-800 shadow-inner">
+                        <div id="ad-progress" class="bg-gradient-to-r from-amber-500 to-amber-400 h-full w-0 transition-all duration-1000 ease-linear"></div>
                     </div>
-                    <div class="text-lg text-slate-400 font-mono font-bold" id="ad-timer-text">30s remaining</div>
+                    <span id="ad-timer-text" class="text-xs text-slate-400 font-mono font-bold">30s remaining</span>
                 </div>
 
-                <!-- Video Controls Bar -->
-                <div id="video-controls" class="absolute bottom-0 left-0 right-0 p-4 pt-16 control-bar flex items-center justify-between z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div class="flex items-center gap-6">
-                        <button onclick="togglePlayPause()" class="text-white hover:text-indigo-400 transition" id="play-pause-btn">
-                            <i class="fa-solid fa-pause text-2xl"></i>
+                <!-- Studio Audio Mixer HUD (Visible for Broadcasters/Demo) -->
+                <div id="studio-hud" class="hidden absolute top-4 left-4 z-20 glass-card p-3 rounded-2xl flex-col gap-2.5 max-w-xs w-full shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-xs font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-sliders"></i> Studio Audio Controls
+                        </span>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">48kHz Pro</span>
+                    </div>
+
+                    <!-- Mic Gain & Level -->
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between text-[11px] text-slate-300 font-bold">
+                            <span><i class="fa-solid fa-microphone text-indigo-400 mr-1"></i> Mic Level</span>
+                            <span id="mic-gain-val">100%</span>
+                        </div>
+                        <input type="range" id="mic-gain-slider" min="0" max="2" step="0.05" value="1" class="w-full">
+                    </div>
+
+                    <!-- Desktop Gain & Level -->
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center justify-between text-[11px] text-slate-300 font-bold">
+                            <span><i class="fa-solid fa-desktop text-indigo-400 mr-1"></i> Game/Desktop</span>
+                            <span id="desktop-gain-val">100%</span>
+                        </div>
+                        <input type="range" id="desktop-gain-slider" min="0" max="2" step="0.05" value="1" class="w-full">
+                    </div>
+
+                    <!-- Visual VU Level Meter -->
+                    <div class="flex flex-col gap-1 pt-1 border-t border-slate-800/80">
+                        <div class="flex justify-between text-[9px] text-slate-400 uppercase font-bold">
+                            <span>Master Audio Output</span>
+                            <span id="vu-peak-text" class="text-emerald-400">Limiter Active (-1dB)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800 flex">
+                            <div id="vu-bar" class="vu-bar h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500 w-0"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hovering Video Controls Bar -->
+                <div id="video-controls" class="absolute bottom-0 left-0 right-0 p-4 pt-12 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent flex items-center justify-between z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div class="flex items-center gap-4">
+                        <button onclick="togglePlayPause()" id="play-pause-btn" class="w-9 h-9 rounded-xl bg-slate-900/80 hover:bg-indigo-600 text-white flex items-center justify-center transition border border-slate-700">
+                            <i class="fa-solid fa-pause text-sm"></i>
                         </button>
-                        <div class="flex items-center gap-3 group/volume">
-                            <button onclick="toggleMute()" class="text-white hover:text-indigo-400 transition w-8 text-left" id="mute-btn">
-                                <i class="fa-solid fa-volume-high text-xl"></i>
+
+                        <div class="flex items-center gap-2 group/vol">
+                            <button onclick="toggleMute()" id="mute-btn" class="w-9 h-9 rounded-xl bg-slate-900/80 hover:bg-indigo-600 text-white flex items-center justify-center transition border border-slate-700">
+                                <i class="fa-solid fa-volume-high text-sm"></i>
                             </button>
-                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="w-0 opacity-0 group-hover/volume:w-28 group-hover/volume:opacity-100 transition-all duration-300">
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="1" class="w-20">
                         </div>
-                        <div class="text-xs text-white font-mono flex items-center gap-2 ml-4 border border-white/20 bg-black/40 px-3 py-1 rounded shadow-inner tracking-widest">
-                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span> LIVE
+
+                        <div class="text-xs font-extrabold text-slate-300 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE
                         </div>
                     </div>
-                    <div class="flex items-center gap-6">
-                        <button onclick="toggleFullscreen()" class="text-white hover:text-indigo-400 transition" title="Fullscreen">
-                            <i class="fa-solid fa-expand text-xl"></i>
+
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleFullscreen()" class="w-9 h-9 rounded-xl bg-slate-900/80 hover:bg-indigo-600 text-white flex items-center justify-center transition border border-slate-700" title="Fullscreen">
+                            <i class="fa-solid fa-expand text-sm"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Loading Spinner -->
-                <div id="video-loader" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-40 hidden backdrop-blur-md">
-                    <div class="w-20 h-20 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(79,70,229,0.5)]"></div>
-                    <p class="font-bold text-xl text-indigo-100 tracking-wide" id="loader-text">Connecting...</p>
-                    <p class="text-sm text-slate-400 mt-2" id="loader-subtext">Waiting for host to accept connection</p>
+                <!-- Video Loader / Connecting Overlay -->
+                <div id="video-loader" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center z-40 hidden backdrop-blur-md">
+                    <div class="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(79,70,229,0.4)]"></div>
+                    <h3 id="loader-text" class="font-extrabold text-lg text-white">Connecting to Stream...</h3>
+                    <p id="loader-subtext" class="text-xs text-slate-400 mt-1">Establishing P2P WebRTC Connection</p>
                 </div>
             </div>
 
-            <!-- Chat Area (Right Sidebar) - GUARANTEED TO BE SIBLING OF VIDEO AREA -->
-            <div class="w-80 border-l border-slate-700/50 flex flex-col shrink-0 relative z-50 bg-slate-900 h-full shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+            <!-- ================= RIGHT SIDEBAR: LIVE CHAT ================= -->
+            <div id="chat-sidebar" class="w-80 md:w-96 border-l border-slate-800 bg-slate-900/95 flex flex-col shrink-0 h-full relative z-30">
                 
-                <!-- Chat Header (Fixed Height) -->
-                <div class="h-14 border-b border-slate-700/50 flex items-center px-5 justify-between bg-slate-800/80 shrink-0">
-                    <span class="font-bold text-gray-200 text-lg tracking-wide">Live Chat</span>
+                <!-- Chat Header -->
+                <div class="h-14 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 bg-slate-900/50">
+                    <span class="font-bold text-slate-200 text-sm tracking-wide flex items-center gap-2">
+                        <i class="fa-regular fa-comments text-indigo-400"></i> Stream Chat
+                    </span>
                     <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-gray-500 shadow-[0_0_5px_rgba(107,114,128,0.5)]" id="chat-status-dot"></span>
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="chat-status-text">Offline</span>
+                        <span id="chat-status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600"></span>
+                        <span id="chat-status-text" class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Offline</span>
                     </div>
                 </div>
 
-                <!-- Chat Messages Container (Flexible Height) -->
-                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto chat-scroll flex flex-col gap-4 min-h-0 relative">
-                    <div class="text-center text-xs text-slate-500 my-4 font-semibold uppercase tracking-widest">Welcome to the chat</div>
+                <!-- Messages Container -->
+                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto chat-scroll flex flex-col gap-3 min-h-0">
+                    <div class="text-center text-[11px] text-slate-500 font-bold uppercase tracking-widest my-2">Welcome to Live Chat</div>
                 </div>
 
-                <!-- Gift Toolbar (Fixed Height) -->
-                <div class="p-3 border-t border-slate-700/50 bg-slate-800/80 grid grid-cols-3 gap-2 shrink-0">
-                    <button onclick="sendNexusGift(50)" class="bg-gradient-to-br from-yellow-600/80 to-yellow-800/80 hover:from-yellow-500 hover:to-yellow-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-yellow-500/30 group shadow-md cursor-pointer">
-                        <i class="fa-solid fa-gem text-yellow-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(253,224,71,0.5)]"></i>
-                        <span class="text-[11px] font-bold text-white">50 NC</span>
-                        <span class="text-[9px] text-yellow-200/90 font-semibold">3m No-Ads</span>
+                <!-- Gift Toolbar -->
+                <div class="p-3 border-t border-slate-800 bg-slate-900/80 grid grid-cols-3 gap-2 shrink-0">
+                    <button onclick="sendNexusGift(50)" class="bg-slate-800 hover:bg-slate-700/80 border border-amber-500/30 rounded-xl p-2 flex flex-col items-center justify-center transition group">
+                        <i class="fa-solid fa-gem text-amber-400 mb-1 group-hover:scale-110 transition"></i>
+                        <span class="text-xs font-extrabold text-white">50 NC</span>
+                        <span class="text-[9px] text-amber-300/80 font-bold">3m No-Ads</span>
                     </button>
-                    <button onclick="sendNexusGift(100)" class="bg-gradient-to-br from-emerald-600/80 to-emerald-800/80 hover:from-emerald-500 hover:to-emerald-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-emerald-500/30 group shadow-md cursor-pointer">
-                        <i class="fa-solid fa-rocket text-emerald-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(110,231,183,0.5)]"></i>
-                        <span class="text-[11px] font-bold text-white">100 NC</span>
-                        <span class="text-[9px] text-emerald-200/90 font-semibold">10m No-Ads</span>
+                    <button onclick="sendNexusGift(100)" class="bg-slate-800 hover:bg-slate-700/80 border border-emerald-500/30 rounded-xl p-2 flex flex-col items-center justify-center transition group">
+                        <i class="fa-solid fa-rocket text-emerald-400 mb-1 group-hover:scale-110 transition"></i>
+                        <span class="text-xs font-extrabold text-white">100 NC</span>
+                        <span class="text-[9px] text-emerald-300/80 font-bold">10m No-Ads</span>
                     </button>
-                    <button onclick="sendNexusGift(500)" class="bg-gradient-to-br from-purple-600/80 to-purple-800/80 hover:from-purple-500 hover:to-purple-700 rounded-lg p-2 flex flex-col items-center justify-center transition border border-purple-500/30 group relative overflow-hidden shadow-md cursor-pointer">
-                        <div class="absolute inset-0 bg-white/20 -skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
-                        <i class="fa-solid fa-crown text-purple-300 mb-1 group-hover:scale-110 transition drop-shadow-[0_0_5px_rgba(216,180,254,0.5)]"></i>
-                        <span class="text-[11px] font-bold text-white">500 NC</span>
-                        <span class="text-[9px] text-purple-200/90 font-semibold">PERM VIP</span>
+                    <button onclick="sendNexusGift(500)" class="bg-slate-800 hover:bg-slate-700/80 border border-purple-500/30 rounded-xl p-2 flex flex-col items-center justify-center transition group">
+                        <i class="fa-solid fa-crown text-purple-400 mb-1 group-hover:scale-110 transition"></i>
+                        <span class="text-xs font-extrabold text-white">500 NC</span>
+                        <span class="text-[9px] text-purple-300/80 font-bold">PERM VIP</span>
                     </button>
                 </div>
 
-                <!-- Chat Input Area (Fixed Height) -->
-                <div class="p-4 border-t border-slate-700/50 bg-slate-900 shrink-0">
-                    <form id="chat-form" class="flex gap-2" onsubmit="handleChatSubmit(event)">
-                        <input type="text" id="chat-input" placeholder="Send a message..." class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 transition-all text-white placeholder-slate-400" disabled autocomplete="off">
-                        <button type="submit" id="chat-submit" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-5 py-3 transition-all shadow-[0_0_10px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group" disabled>
-                            <i class="fa-solid fa-paper-plane text-base group-hover:translate-x-1 transition-transform"></i>
+                <!-- Chat Input Form -->
+                <div class="p-3 border-t border-slate-800 bg-slate-950 shrink-0">
+                    <form id="chat-form" class="flex items-center gap-2" onsubmit="handleChatSubmit(event)">
+                        <input type="text" id="chat-input" placeholder="Send a message..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition disabled:opacity-50" disabled autocomplete="off">
+                        <button type="submit" id="chat-submit" class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl px-4 py-2.5 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
                         </button>
                     </form>
                 </div>
@@ -313,10 +392,12 @@
     </main>
 
     <script>
+        // DOM Element Registry
         const DOM = {
             lobbyView: document.getElementById('lobby-view'),
             streamView: document.getElementById('stream-view'),
             video: document.getElementById('main-video'),
+            demoCanvas: document.getElementById('demo-canvas'),
             loader: document.getElementById('video-loader'),
             loaderText: document.getElementById('loader-text'),
             loaderSubtext: document.getElementById('loader-subtext'),
@@ -350,46 +431,146 @@
             unmuteOverlay: document.getElementById('unmute-overlay'),
             playPauseBtn: document.getElementById('play-pause-btn'),
             muteBtn: document.getElementById('mute-btn'),
-            volumeSlider: document.getElementById('volume-slider')
+            volumeSlider: document.getElementById('volume-slider'),
+
+            studioHud: document.getElementById('studio-hud'),
+            micGainSlider: document.getElementById('mic-gain-slider'),
+            micGainVal: document.getElementById('mic-gain-val'),
+            desktopGainSlider: document.getElementById('desktop-gain-slider'),
+            desktopGainVal: document.getElementById('desktop-gain-val'),
+            vuBar: document.getElementById('vu-bar')
         };
 
-        const GLOBAL_CHANNEL_ID = "peerstream-global-live-host";
+        const GLOBAL_CHANNEL_ID = "peerstream-pro-live-channel";
         const STUN_CONFIG = { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } };
 
+        // Core Application State
         let peer = null;
         let isBroadcaster = false;
+        let isDemoMode = false;
         let localStream = null;
-        let hostConnection = null; 
-        let connectedPeers = new Map(); 
+        let hostConnection = null;
+        let connectedPeers = new Map();
         
-        let localUsername = "User_" + Math.floor(Math.random() * 10000);
-        let nexusBalance = 1250; // Mock balance
+        let localUsername = "User_" + Math.floor(1000 + Math.random() * 9000);
+        let nexusBalance = 1250;
 
-        // Ad System State
-        let watchToEarnInterval = null;
+        // Web Audio Studio Engine
+        let audioCtx = null;
+        let micGainNode = null;
+        let desktopGainNode = null;
+        let masterLimiter = null;
+        let analyserNode = null;
+        let animFrameId = null;
+
+        // Rewards & Ad State
+        let w2eInterval = null;
         let w2eRemaining = 15;
-        let activeAdCountdownTimer = null;
+        let adBreakInterval = null;
+        let activeAdTimer = null;
         let adFreeSecondsRemaining = 0;
-        let adFreeCountdownTimer = null;
+        let adFreeTimer = null;
         let isAdPlaying = false;
         let permanentAdFree = false;
 
-        function showToast(message, type = 'info') {
+        // UI Toast Message Generator
+        function showToast(msg, type = 'info') {
             const toast = document.createElement('div');
-            let bg = 'bg-slate-800', border = 'border-slate-700';
-            if (type === 'success') { bg = 'bg-emerald-900/90'; border = 'border-emerald-500'; }
-            if (type === 'error') { bg = 'bg-red-900/90'; border = 'border-red-500'; }
-            if (type === 'gift') { bg = 'bg-yellow-900/90'; border = 'border-yellow-500'; }
+            let bg = 'bg-slate-900 border-slate-800 text-slate-200';
+            if (type === 'success') bg = 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200';
+            if (type === 'error') bg = 'bg-red-950/90 border-red-500/50 text-red-200';
+            if (type === 'gift') bg = 'bg-amber-950/90 border-amber-500/50 text-amber-200';
 
-            toast.className = `${bg} border ${border} text-white px-4 py-3 rounded-lg shadow-xl text-sm font-medium transition-all duration-300 transform translate-y-[-20px] opacity-0 flex items-center gap-2`;
-            toast.innerHTML = message;
+            toast.className = `${bg} border px-4 py-3 rounded-xl shadow-2xl text-xs font-bold transition-all duration-300 transform -translate-y-2 opacity-0 flex items-center gap-2`;
+            toast.innerHTML = msg;
             
             DOM.toastContainer.appendChild(toast);
-            setTimeout(() => toast.classList.remove('translate-y-[-20px]', 'opacity-0'), 10);
+            setTimeout(() => toast.classList.remove('-translate-y-2', 'opacity-0'), 10);
             setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-[-20px]');
+                toast.classList.add('opacity-0', '-translate-y-2');
                 setTimeout(() => toast.remove(), 300);
-            }, 4000);
+            }, 3500);
+        }
+
+        function setupStudioAudioEngine(screenStream, micStream) {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+                
+                // Master Anti-Clipping Limiter (-1dB Ceiling)
+                masterLimiter = audioCtx.createDynamicsCompressor();
+                masterLimiter.threshold.setValueAtTime(-1.0, audioCtx.currentTime);
+                masterLimiter.knee.setValueAtTime(0, audioCtx.currentTime);
+                masterLimiter.ratio.setValueAtTime(20, audioCtx.currentTime);
+                masterLimiter.attack.setValueAtTime(0.003, audioCtx.currentTime);
+                masterLimiter.release.setValueAtTime(0.1, audioCtx.currentTime);
+
+                // VU Level Meter Analyser
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 64;
+
+                const audioDestination = audioCtx.createMediaStreamDestination();
+
+                // Process Desktop Audio Track
+                if (screenStream && screenStream.getAudioTracks().length > 0) {
+                    const desktopSource = audioCtx.createMediaStreamSource(new MediaStream([screenStream.getAudioTracks()[0]]));
+                    desktopGainNode = audioCtx.createGain();
+                    desktopGainNode.gain.value = 1.0;
+                    desktopSource.connect(desktopGainNode).connect(masterLimiter);
+                }
+
+                // Process Microphone Audio Track
+                if (micStream && micStream.getAudioTracks().length > 0) {
+                    const micSource = audioCtx.createMediaStreamSource(new MediaStream([micStream.getAudioTracks()[0]]));
+                    micGainNode = audioCtx.createGain();
+                    micGainNode.gain.value = 1.0;
+                    micSource.connect(micGainNode).connect(masterLimiter);
+                }
+
+                masterLimiter.connect(analyserNode);
+                analyserNode.connect(audioDestination);
+
+                startVUMeter();
+
+                return audioDestination.stream.getAudioTracks()[0];
+            } catch (err) {
+                console.warn("Audio Context init warning:", err);
+                return screenStream?.getAudioTracks()[0] || null;
+            }
+        }
+
+        // Real-Time VU Meter Loop
+        function startVUMeter() {
+            if (!analyserNode) return;
+            const buffer = new Uint8Array(analyserNode.frequencyBinCount);
+            
+            function updateVU() {
+                analyserNode.getByteFrequencyData(buffer);
+                let sum = 0;
+                for (let i = 0; i < buffer.length; i++) sum += buffer[i];
+                const average = sum / buffer.length;
+                const percentage = Math.min(100, Math.round((average / 128) * 100));
+
+                if (DOM.vuBar) DOM.vuBar.style.width = `${percentage}%`;
+                animFrameId = requestAnimationFrame(updateVU);
+            }
+            updateVU();
+        }
+
+        // Gain Slider Event Handlers
+        DOM.micGainSlider?.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (micGainNode) micGainNode.gain.value = val;
+            DOM.micGainVal.textContent = `${Math.round(val * 100)}%`;
+        });
+
+        DOM.desktopGainSlider?.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (desktopGainNode) desktopGainNode.gain.value = val;
+            DOM.desktopGainVal.textContent = `${Math.round(val * 100)}%`;
+        });
+
+        function forceHighQualityOpusSDP(sdp) {
+            return sdp.replace(/a=fmtp:111 (.*)/g, 'a=fmtp:111 $1;stereo=1;sprop-stereo=1;maxaveragebitrate=510000;cbr=1;usedtx=0');
         }
 
         function updateWalletUI() {
@@ -398,8 +579,7 @@
         }
 
         function sendNexusGift(amount) {
-            if (isBroadcaster) return showToast("Broadcasters cannot gift themselves.", "error");
-            if (!hostConnection || !hostConnection.open) return showToast("Not connected to a stream.", "error");
+            if (isBroadcaster && !isDemoMode) return showToast("Broadcasters cannot gift themselves.", "error");
             if (nexusBalance < amount) return showToast("Insufficient Nexus Coins!", "error");
 
             nexusBalance -= amount;
@@ -407,7 +587,8 @@
             grantAdFreeBenefits(amount);
 
             const giftMsg = { type: 'GIFT', username: localUsername, amount: amount };
-            hostConnection.send(giftMsg);
+            
+            if (hostConnection && hostConnection.open) hostConnection.send(giftMsg);
             
             appendChatMessage(localUsername, `GIFTED ${amount} COINS! 🎁`, true, amount);
             showToast(`🎁 Gift Sent! (-${amount} NC)`, "success");
@@ -424,8 +605,7 @@
                 permanentAdFree = true;
                 adFreeSecondsRemaining = 999999;
                 DOM.adFreeText.textContent = "PERM VIP";
-                DOM.adFreeBadge.classList.replace('text-yellow-400', 'text-purple-400');
-                DOM.adFreeBadge.classList.replace('border-yellow-500/30', 'border-purple-500/50');
+                DOM.adFreeBadge.className = "flex items-center gap-1 bg-purple-500/20 text-purple-400 border border-purple-500/40 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase";
                 showToast("👑 Permanent Ad-Free Unlocked!", "success");
             } else if (amount >= 100) {
                 adFreeSecondsRemaining += (10 * 60);
@@ -438,12 +618,12 @@
             DOM.adFreeBadge.classList.remove('hidden');
             DOM.adFreeBadge.classList.add('flex');
             
-            if (adFreeCountdownTimer) clearInterval(adFreeCountdownTimer);
+            if (adFreeTimer) clearInterval(adFreeTimer);
             if (!permanentAdFree) {
-                adFreeCountdownTimer = setInterval(() => {
+                adFreeTimer = setInterval(() => {
                     adFreeSecondsRemaining--;
                     if (adFreeSecondsRemaining <= 0) {
-                        clearInterval(adFreeCountdownTimer);
+                        clearInterval(adFreeTimer);
                         DOM.adFreeBadge.classList.remove('flex');
                         DOM.adFreeBadge.classList.add('hidden');
                     } else {
@@ -462,11 +642,11 @@
             DOM.adTakeover.classList.add('active');
             let remaining = 30;
             
-            if (activeAdCountdownTimer) clearInterval(activeAdCountdownTimer);
-            activeAdCountdownTimer = setInterval(() => {
+            if (activeAdTimer) clearInterval(activeAdTimer);
+            activeAdTimer = setInterval(() => {
                 remaining--;
                 DOM.adTimerText.textContent = `${remaining}s remaining`;
-                DOM.adProgress.style.width = `${(remaining / 30) * 100}%`;
+                DOM.adProgress.style.width = `${((30 - remaining) / 30) * 100}%`;
 
                 if (remaining <= 0) dismissActiveAd();
             }, 1000);
@@ -475,15 +655,15 @@
         function dismissActiveAd() {
             isAdPlaying = false;
             DOM.adTakeover.classList.remove('active');
-            if (activeAdCountdownTimer) clearInterval(activeAdCountdownTimer);
+            if (activeAdTimer) clearInterval(activeAdTimer);
         }
 
         function startWatchToEarn() {
-            if (isBroadcaster) return;
+            if (isBroadcaster && !isDemoMode) return;
             DOM.w2eWidget.classList.remove('hidden');
             DOM.w2eWidget.classList.add('flex');
             
-            watchToEarnInterval = setInterval(() => {
+            w2eInterval = setInterval(() => {
                 w2eRemaining--;
                 DOM.w2eProgressBar.style.width = `${((15 - w2eRemaining) / 15) * 100}%`;
                 DOM.w2eTimerText.textContent = `00:${w2eRemaining.toString().padStart(2, '0')}`;
@@ -493,79 +673,63 @@
                     updateWalletUI();
                     
                     const coin = document.createElement('i');
-                    coin.className = 'fa-solid fa-coins coin-drop';
+                    coin.className = 'fa-solid fa-coins coin-pop';
                     const rect = DOM.w2eWidget.getBoundingClientRect();
-                    coin.style.left = `${rect.left + 10}px`;
+                    coin.style.left = `${rect.left + 20}px`;
                     coin.style.top = `${rect.top}px`;
                     document.body.appendChild(coin);
-                    setTimeout(() => coin.remove(), 1500);
+                    setTimeout(() => coin.remove(), 1200);
 
-                    w2eRemaining = 15; // Reset
+                    w2eRemaining = 15;
                 }
             }, 1000);
         }
 
         async function startBroadcast() {
-            showToast("ℹ️ Attempting to capture screen & audio...");
-
-            // UI Switch
-            DOM.lobbyView.classList.replace('fade-in', 'fade-out');
-            setTimeout(() => {
-                DOM.lobbyView.classList.add('hidden');
-                DOM.streamView.classList.remove('hidden');
-                setTimeout(() => DOM.streamView.classList.replace('fade-out', 'fade-in'), 50);
-            }, 400);
+            showToast("ℹ️ Requesting HD Screen & Audio...");
 
             try {
-                // High Quality Screen Capture
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { frameRate: { ideal: 60 } },
+                    video: { frameRate: { ideal: 60 }, width: { ideal: 1920 }, height: { ideal: 1080 } },
                     audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                 });
 
-                // High Quality Microphone Processing
                 let micStream = null;
                 try {
-                    micStream = await navigator.mediaDevices.getUserMedia({ 
+                    micStream = await navigator.mediaDevices.getUserMedia({
                         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                     });
-                } catch (e) { console.warn("No mic"); }
+                } catch (e) { console.warn("No mic connected."); }
 
-                const audioCtx = new AudioContext();
-                const dest = audioCtx.createMediaStreamDestination();
+                const processedAudioTrack = setupStudioAudioEngine(screenStream, micStream);
                 
-                if (screenStream.getAudioTracks().length > 0) {
-                    audioCtx.createMediaStreamSource(new MediaStream([screenStream.getAudioTracks()[0]])).connect(dest);
-                }
+                localStream = new MediaStream([
+                    screenStream.getVideoTracks()[0],
+                    ...(processedAudioTrack ? [processedAudioTrack] : [])
+                ]);
 
-                if (micStream && micStream.getAudioTracks().length > 0) {
-                    const micSource = audioCtx.createMediaStreamSource(new MediaStream([micStream.getAudioTracks()[0]]));
-                    const compressor = audioCtx.createDynamicsCompressor();
-                    compressor.threshold.value = -12;
-                    compressor.ratio.value = 8;
-                    const gain = audioCtx.createGain();
-                    gain.gain.value = 1.5;
-                    micSource.connect(compressor).connect(gain).connect(dest);
-                }
-                
-                localStream = new MediaStream([screenStream.getVideoTracks()[0], ...dest.stream.getAudioTracks()]);
+                // Switch Views
+                DOM.lobbyView.classList.add('hidden');
+                DOM.streamView.classList.remove('hidden');
+                DOM.studioHud.classList.remove('hidden');
+                DOM.studioHud.classList.add('flex');
 
-                // Broadcaster Setup
                 isBroadcaster = true;
-                DOM.roleLabel.innerHTML = '<i class="fa-solid fa-satellite-dish mr-1"></i> Host <span class="ml-1 text-[9px] bg-indigo-600 px-1.5 py-0.5 rounded-sm">1080p60</span>';
+                DOM.roleLabel.innerHTML = '<i class="fa-solid fa-satellite-dish mr-1"></i> Host <span class="ml-1 text-[9px] bg-indigo-600 px-1.5 py-0.5 rounded-md">1080p60</span>';
                 DOM.viewerCountContainer.classList.remove('hidden');
-                
+                DOM.viewerCountContainer.classList.add('flex');
+
                 DOM.video.srcObject = localStream;
-                DOM.video.muted = true; // Prevents infinite echo loop locally
+                DOM.video.muted = true; // Prevent internal echo for host
 
                 DOM.liveIndicator.classList.remove('hidden');
-                DOM.liveIndicator.classList.add('pulse-green');
+                DOM.liveIndicator.classList.add('flex', 'pulse-emerald');
                 DOM.liveDot.classList.replace('bg-red-500', 'bg-emerald-500');
 
                 peer = new Peer(GLOBAL_CHANNEL_ID, STUN_CONFIG);
                 
-                peer.on('open', (id) => {
-                    showToast("🔴 You are now LIVE!", "success");
+                peer.on('open', () => {
+                    showToast("🔴 You are LIVE!", "success");
                     updateChatStatus(true);
                 });
 
@@ -573,7 +737,11 @@
                     conn.on('open', () => {
                         connectedPeers.set(conn.peer, conn);
                         DOM.viewerCount.textContent = connectedPeers.size;
-                        peer.call(conn.peer, localStream); // Send video
+                        
+                        const call = peer.call(conn.peer, localStream);
+                        call.on('signal', (data) => {
+                            if (data.sdp) data.sdp = forceHighQualityOpusSDP(data.sdp);
+                        });
                     });
 
                     conn.on('data', (data) => {
@@ -594,15 +762,14 @@
                 });
 
                 peer.on('error', (err) => {
-                    if(err.type === 'unavailable-id') {
+                    if (err.type === 'unavailable-id') {
                         showToast("❌ Channel in use! Someone else is broadcasting.", "error");
                         setTimeout(() => location.reload(), 3000);
                     }
                 });
 
             } catch (err) {
-                alert("Capture canceled or failed. Reloading...");
-                location.reload();
+                showToast("Screen capture canceled or failed.", "error");
             }
         }
 
@@ -613,37 +780,32 @@
         }
 
         function tuneIn() {
-            DOM.lobbyView.classList.replace('fade-in', 'fade-out');
-            setTimeout(() => {
-                DOM.lobbyView.classList.add('hidden');
-                DOM.streamView.classList.remove('hidden');
-                setTimeout(() => DOM.streamView.classList.replace('fade-out', 'fade-in'), 50);
-                DOM.loader.classList.remove('hidden');
-            }, 400);
-            
+            DOM.lobbyView.classList.add('hidden');
+            DOM.streamView.classList.remove('hidden');
+            DOM.loader.classList.remove('hidden');
+
             DOM.liveIndicator.classList.remove('hidden');
-            
-            // Connection Timeout Safety
-            let connTimeout = setTimeout(() => {
-                DOM.loaderText.textContent = "Stream Offline";
-                DOM.loaderSubtext.textContent = "Did you remember to 'Go Live' in another tab first?";
-                DOM.loader.querySelector('i')?.classList.replace('fa-spin', 'opacity-50');
-            }, 10000);
+            DOM.liveIndicator.classList.add('flex');
+
+            let timeoutId = setTimeout(() => {
+                DOM.loaderText.textContent = "Broadcaster Offline";
+                DOM.loaderSubtext.textContent = "Did you click 'Go Live' in another browser window first?";
+            }, 8000);
 
             peer = new Peer(STUN_CONFIG);
 
-            peer.on('open', (id) => {
+            peer.on('open', () => {
                 hostConnection = peer.connect(GLOBAL_CHANNEL_ID, { reliable: true });
 
                 hostConnection.on('open', () => {
-                    clearTimeout(connTimeout);
+                    clearTimeout(timeoutId);
                     updateChatStatus(true);
-                    DOM.roleLabel.innerHTML = '<i class="fa-solid fa-users-viewfinder mr-1"></i> Viewer <span class="ml-1 text-[9px] bg-emerald-600 px-1.5 py-0.5 rounded-sm">Source</span>';
+                    DOM.roleLabel.innerHTML = '<i class="fa-solid fa-users-viewfinder mr-1"></i> Viewer <span class="ml-1 text-[9px] bg-emerald-600 px-1.5 py-0.5 rounded-md">Pro HD</span>';
                     DOM.liveDot.classList.replace('bg-red-500', 'bg-emerald-500');
-                    DOM.liveIndicator.classList.add('pulse-green');
+                    DOM.liveIndicator.classList.add('pulse-emerald');
                     
                     startWatchToEarn();
-                    setInterval(triggerAdBreak, 3 * 60 * 1000); // Ad every 3 mins
+                    adBreakInterval = setInterval(triggerAdBreak, 2.5 * 60 * 1000);
                 });
 
                 hostConnection.on('data', (data) => {
@@ -652,58 +814,150 @@
                 });
 
                 hostConnection.on('close', () => {
-                    showToast("Host ended the stream.", "error");
+                    showToast("Host ended stream.", "error");
                     setTimeout(() => location.reload(), 2000);
                 });
             });
 
             peer.on('call', (call) => {
-                clearTimeout(connTimeout);
-                call.answer(); 
+                clearTimeout(timeoutId);
+                call.answer();
+
                 call.on('stream', (remoteStream) => {
                     DOM.loader.classList.add('hidden');
                     DOM.video.srcObject = remoteStream;
                     
-                    DOM.video.play().catch(e => {
+                    DOM.video.play().catch(() => {
                         DOM.video.muted = true;
                         DOM.unmuteOverlay.classList.remove('hidden');
-                        DOM.video.play(); 
+                        DOM.video.play();
                     });
                 });
             });
 
             peer.on('error', (err) => {
                 if (err.type === 'peer-unavailable') {
-                    clearTimeout(connTimeout);
-                    DOM.loaderText.textContent = "Host is Offline";
-                    DOM.loaderSubtext.textContent = "Make sure the broadcaster is live in another tab!";
-                    DOM.loader.querySelector('div').classList.add('hidden'); // hide spinner
+                    clearTimeout(timeoutId);
+                    DOM.loaderText.textContent = "Stream Offline";
+                    DOM.loaderSubtext.textContent = "Broadcaster is not live on this channel.";
                 }
             });
         }
-        
+
+        function startDemoStream() {
+            isDemoMode = true;
+            DOM.lobbyView.classList.add('hidden');
+            DOM.streamView.classList.remove('hidden');
+            DOM.studioHud.classList.remove('hidden');
+            DOM.studioHud.classList.add('flex');
+
+            DOM.video.classList.add('hidden');
+            DOM.demoCanvas.classList.remove('hidden');
+
+            DOM.liveIndicator.classList.remove('hidden');
+            DOM.liveIndicator.classList.add('flex', 'pulse-emerald');
+            DOM.liveDot.classList.replace('bg-red-500', 'bg-emerald-500');
+            DOM.roleLabel.innerHTML = '<i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Demo Mode';
+            
+            DOM.viewerCountContainer.classList.remove('hidden');
+            DOM.viewerCountContainer.classList.add('flex');
+            DOM.viewerCount.textContent = "42";
+
+            updateChatStatus(true);
+            startWatchToEarn();
+
+            // Animated Test Pattern Canvas
+            const ctx = DOM.demoCanvas.getContext('2d');
+            let frame = 0;
+            
+            function renderDemo() {
+                if (!isDemoMode) return;
+                DOM.demoCanvas.width = 1280;
+                DOM.demoCanvas.height = 720;
+
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, 1280, 720);
+
+                // Dynamic Audio Visualizer Waves
+                ctx.strokeStyle = '#6366f1';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                for (let i = 0; i < 1280; i += 10) {
+                    const y = 360 + Math.sin((i + frame * 5) * 0.02) * 60 * Math.cos(frame * 0.05);
+                    if (i === 0) ctx.moveTo(i, y);
+                    else ctx.lineTo(i, y);
+                }
+                ctx.stroke();
+
+                // Demo Text Overlay
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 42px Plus Jakarta Sans';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚡ PEERSTREAM PRO STUDIO DEMO', 640, 280);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '20px Plus Jakarta Sans';
+                ctx.fillText('48kHz Stereo Audio Engine • Dynamic Limiter Active', 640, 330);
+
+                frame++;
+                requestAnimationFrame(renderDemo);
+            }
+            renderDemo();
+
+            // Synthetic Audio Generator for Demo
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = 220; // Soft melodic note
+                gain.gain.value = 0.05;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+            } catch(e) {}
+
+            // Simulated Chat Bot Messages
+            const botNames = ['PixelRider', 'CyberSamurai', 'VoxelQueen', 'NeonRider'];
+            const botMsgs = ['Audio quality sounds super crisp!', 'Love the zero delay!', 'Sending some coins!', 'Is this 60fps?'];
+            
+            setInterval(() => {
+                if (!isDemoMode) return;
+                const rName = botNames[Math.floor(Math.random() * botNames.length)];
+                const rMsg = botMsgs[Math.floor(Math.random() * botMsgs.length)];
+                appendChatMessage(rName, rMsg);
+            }, 4000);
+
+            showToast("⚡ Launched Interactive Studio Demo!", "success");
+        }
+
+        // Unmute and Playback Controls
         function unmuteStream() {
             DOM.video.muted = false;
             DOM.unmuteOverlay.classList.add('hidden');
-            if(DOM.volumeSlider) DOM.volumeSlider.value = 1;
+            if (DOM.volumeSlider) DOM.volumeSlider.value = 1;
             updateMuteIcon();
         }
 
         function togglePlayPause() {
-            if (DOM.video.paused) { DOM.video.play(); DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause text-2xl"></i>'; } 
-            else { DOM.video.pause(); DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-2xl"></i>'; }
+            if (DOM.video.paused) {
+                DOM.video.play();
+                DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-pause text-sm"></i>';
+            } else {
+                DOM.video.pause();
+                DOM.playPauseBtn.innerHTML = '<i class="fa-solid fa-play text-sm"></i>';
+            }
         }
 
         function toggleMute() {
             DOM.video.muted = !DOM.video.muted;
-            DOM.volumeSlider.value = DOM.video.muted ? 0 : (DOM.video.volume > 0 ? DOM.video.volume : 1);
+            DOM.volumeSlider.value = DOM.video.muted ? 0 : 1;
             updateMuteIcon();
         }
 
         function updateMuteIcon() {
-            if (DOM.video.muted || DOM.video.volume === 0) DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-xl text-red-400"></i>';
-            else if (DOM.video.volume < 0.5) DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-low text-xl"></i>';
-            else DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xl"></i>';
+            if (DOM.video.muted || DOM.video.volume === 0) DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark text-sm text-red-400"></i>';
+            else DOM.muteBtn.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
         }
 
         DOM.volumeSlider?.addEventListener('input', (e) => {
@@ -714,19 +968,19 @@
 
         function toggleFullscreen() {
             const el = DOM.video.parentElement;
-            if (!document.fullscreenElement) el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
-            else document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+            if (!document.fullscreenElement) el.requestFullscreen?.();
+            else document.exitFullscreen?.();
         }
 
         function updateChatStatus(isOnline) {
             if (isOnline) {
-                DOM.chatStatusDot.classList.replace('bg-gray-500', 'bg-emerald-500');
-                DOM.chatStatusDot.classList.add('shadow-[0_0_8px_rgba(16,185,129,0.8)]');
+                DOM.chatStatusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
                 DOM.chatStatusText.textContent = "Online";
-                DOM.chatStatusText.classList.replace('text-gray-400', 'text-emerald-400');
-                DOM.chatInput.disabled = false; DOM.chatSubmit.disabled = false;
+                DOM.chatStatusText.className = "text-xs font-extrabold text-emerald-400 uppercase tracking-wider";
+                DOM.chatInput.disabled = false;
+                DOM.chatSubmit.disabled = false;
             } else {
-                DOM.chatStatusDot.classList.replace('bg-emerald-500', 'bg-red-500');
+                DOM.chatStatusDot.className = "w-2.5 h-2.5 rounded-full bg-slate-600";
                 DOM.chatStatusText.textContent = "Offline";
             }
         }
@@ -737,29 +991,33 @@
             if (!text) return;
 
             const msgData = { type: 'CHAT', username: localUsername, message: text };
+            
             if (isBroadcaster) {
                 appendChatMessage(localUsername, text);
                 broadcastToAll(msgData);
             } else if (hostConnection?.open) {
                 hostConnection.send(msgData);
                 appendChatMessage(localUsername, text);
+            } else if (isDemoMode) {
+                appendChatMessage(localUsername, text);
             }
+
             DOM.chatInput.value = '';
         }
 
         function appendChatMessage(username, message, isGift = false, amount = 0) {
             const msgDiv = document.createElement('div');
-            msgDiv.className = 'text-[13px] animate-[fadeIn_0.2s_ease-in-out] break-words leading-relaxed';
+            msgDiv.className = 'text-xs break-words leading-relaxed animate-fadeIn';
             
             if (isGift) {
-                msgDiv.className += ' bg-yellow-500/10 border border-yellow-500/30 p-2.5 rounded-lg shadow-sm';
+                msgDiv.className += ' bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl shadow-sm';
                 let tier = '🎁';
                 if (amount >= 100) tier = '💎';
                 if (amount >= 500) tier = '👑';
-                msgDiv.innerHTML = `<span class="font-bold text-yellow-400 tracking-wide">${tier} ${username}</span> <span class="text-yellow-100/90 font-medium ml-1">${message}</span>`;
+                msgDiv.innerHTML = `<span class="font-bold text-amber-400">${tier} ${username}</span> <span class="text-amber-100 font-medium ml-1">${message}</span>`;
             } else {
                 const nameColor = username === localUsername ? 'text-indigo-400' : 'text-emerald-400';
-                msgDiv.innerHTML = `<span class="font-bold ${nameColor} tracking-wide">${username}</span><span class="text-gray-400 mx-1">:</span><span class="text-gray-200">${message}</span>`;
+                msgDiv.innerHTML = `<span class="font-bold ${nameColor}">${username}</span><span class="text-slate-500 mx-1">:</span><span class="text-slate-200">${message}</span>`;
             }
 
             DOM.chatMessages.appendChild(msgDiv);
