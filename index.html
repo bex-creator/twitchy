@@ -456,28 +456,35 @@
             showToast("ℹ️ Make sure to check 'Share tab audio' in browser prompt!");
 
             try {
-                // 1. Capture Screen Display
+                // 1. Capture Screen Display - Enforce High Quality Stereo, No Echo Cancellation for games/music
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always" },
-                    audio: true // System / browser tab audio
+                    video: { cursor: "always", frameRate: { ideal: 60 } },
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false,
+                        channelCount: 2,
+                        sampleRate: 48000
+                    }
                 });
 
-                // 2. Capture Microphone Audio with strict Echo Cancellation
+                // 2. Capture Microphone Audio
                 let micStream = null;
                 try {
                     micStream = await navigator.mediaDevices.getUserMedia({ 
                         audio: {
                             echoCancellation: true,
                             noiseSuppression: true,
-                            autoGainControl: true
+                            autoGainControl: true,
+                            sampleRate: 48000
                         }
                     });
                 } catch (micErr) {
                     console.warn("Microphone access denied or not found. Continuing with screen audio only.", micErr);
                 }
 
-                // 3. Mix Audio Streams (Screen + Mic)
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // 3. Mix Audio Streams (Screen + Mic) at High Sample Rate
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
                 const audioDestination = audioCtx.createMediaStreamDestination();
 
                 if (screenStream.getAudioTracks().length > 0) {
@@ -488,13 +495,22 @@
                 if (micStream && micStream.getAudioTracks().length > 0) {
                     const micSource = audioCtx.createMediaStreamSource(micStream);
                     
-                    // Add an Audio Gain Node to artificially boost the mic volume
-                    const micGainNode = audioCtx.createGain();
-                    micGainNode.gain.value = 3.5; // Boosts mic volume by 350%
+                    // Add a dynamic compressor to boost volume WITHOUT distorting/clipping
+                    const compressor = audioCtx.createDynamicsCompressor();
+                    compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
+                    compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+                    compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+                    compressor.attack.setValueAtTime(0, audioCtx.currentTime);
+                    compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
                     
-                    // Route mic through the amplifier before sending to destination
+                    // Add a safe 2x gain before the compressor catches the peaks
+                    const micGainNode = audioCtx.createGain();
+                    micGainNode.gain.value = 2.0; 
+                    
+                    // Route mic through gain -> compressor -> destination
                     micSource.connect(micGainNode);
-                    micGainNode.connect(audioDestination);
+                    micGainNode.connect(compressor);
+                    compressor.connect(audioDestination);
                 }
 
                 // Combine screen video track with mixed audio track
