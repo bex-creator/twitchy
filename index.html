@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Streamer (WebRTC)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .video-container {
+            position: relative;
+            background: #111827; /* Tailwind gray-900 */
+            border-radius: 0.5rem;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Contain is better for screen share to see the full UI */
+            background: #000;
+        }
+        .viewer-video {
+             /* No special transform needed anymore since we aren't mirroring */
+        }
+        .overlay-label {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ef4444; /* red by default (offline) */
+        }
+        .status-dot.live {
+            background-color: #22c55e; /* green (live) */
+            box-shadow: 0 0 8px #22c55e;
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* Chat styles */
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-msg { margin-bottom: 0.5rem; word-break: break-word; }
+        .chat-author { font-weight: 600; margin-right: 0.25rem; }
+        .broadcaster-author { color: #a855f7; } /* Purple */
+        .viewer-author { color: #3b82f6; } /* Blue */
+        .system-msg { color: #6b7280; font-style: italic; font-size: 0.875rem; text-align: center; margin: 0.5rem 0;}
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <nav class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="bg-purple-600 text-white p-2 rounded-lg">
+                <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-gray-900">PeerStream</h1>
+        </div>
+        <div class="text-sm font-medium text-gray-500">
+            Local WebRTC P2P Demo
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-7xl">
+        
+        <div class="mb-6 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">
+            <strong>How this works:</strong> This demo simulates a peer-to-peer connection locally within your browser. It uses <code>getDisplayMedia</code> to capture your screen as the "Broadcaster", then uses the WebRTC <code>RTCPeerConnection</code> API to send that video stream, along with a Data Channel for chat, to a "Viewer" video element on the same page.
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Broadcaster Area -->
+            <div class="lg:col-span-1 flex flex-col gap-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-desktop text-purple-600"></i> Screen Share Setup
+                    </h2>
+                    
+                    <div class="video-container mb-4">
+                        <div class="overlay-label">
+                            <div id="broadcaster-status" class="status-dot"></div>
+                            <span>Local Screen</span>
+                        </div>
+                        <video id="localVideo" autoplay playsinline muted></video>
+                    </div>
+                    
+                    <div class="flex flex-col gap-2">
+                        <button id="startScreenBtn" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-display"></i> 1. Share Screen
+                        </button>
+                        <button id="startStreamBtn" disabled class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-broadcast-tower"></i> 2. Go Live (Connect Peers)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                     <h3 class="font-bold text-gray-700 mb-2">WebRTC Stats</h3>
+                     <div class="text-xs font-mono text-gray-600 bg-gray-50 p-3 rounded-lg overflow-x-auto h-32 overflow-y-auto" id="webrtc-logs">
+                         Ready.<br>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Viewer Area & Chat -->
+            <div class="lg:col-span-2 flex flex-col gap-6">
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                     <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-desktop text-blue-600"></i> Viewer Interface
+                    </h2>
+                    
+                    <div class="video-container mb-4">
+                         <div class="overlay-label">
+                            <div id="viewer-status" class="status-dot"></div>
+                            <span>Remote Stream (P2P)</span>
+                        </div>
+                        <video id="remoteVideo" class="viewer-video" autoplay playsinline controls></video>
+                        
+                        <!-- Connecting overlay -->
+                        <div id="connecting-overlay" class="absolute inset-0 bg-gray-900/80 flex flex-col items-center justify-center text-white z-20 hidden">
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl mb-3 text-purple-500"></i>
+                            <p class="font-medium">Establishing P2P Connection...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[400px]">
+                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-xl flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700"><i class="fa-regular fa-comments mr-2"></i>Live Chat (DataChannel)</h3>
+                        <span id="chat-status" class="text-xs font-medium px-2 py-1 bg-gray-200 text-gray-600 rounded-full">Disconnected</span>
+                    </div>
+                    
+                    <div id="chat-messages" class="flex-grow p-4 text-sm">
+                        <div class="system-msg">Welcome to the P2P chat. Waiting for connection...</div>
+                    </div>
+                    
+                    <div class="p-3 border-t border-gray-200 bg-gray-50 rounded-b-xl flex gap-2">
+                         <select id="chat-role" class="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="broadcaster">Broadcaster</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                        <input type="text" id="chat-input" disabled placeholder="Type a message..." class="flex-grow border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed" onkeypress="handleKeyPress(event)">
+                        <button id="send-btn" disabled class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onclick="sendMessage()">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM Elements
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const startScreenBtn = document.getElementById('startScreenBtn');
+        const startStreamBtn = document.getElementById('startStreamBtn');
+        const broadcasterStatus = document.getElementById('broadcaster-status');
+        const viewerStatus = document.getElementById('viewer-status');
+        const connectingOverlay = document.getElementById('connecting-overlay');
+        const logContainer = document.getElementById('webrtc-logs');
+        
+        // Chat DOM
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatRole = document.getElementById('chat-role');
+        const chatStatus = document.getElementById('chat-status');
+
+        // WebRTC Variables
+        let localStream;
+        let localPeerConnection;  // The Broadcaster
+        let remotePeerConnection; // The Viewer
+        let sendChannel;          // Data channel created by broadcaster
+        let receiveChannel;       // Data channel received by viewer
+
+        // Helper: Logging
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `[${time}] ${msg}<br>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[WebRTC Log] ${msg}`);
+        }
+
+        // Helper: Append Chat Message
+        function appendChatMessage(role, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg';
+            
+            const authorSpan = document.createElement('span');
+            authorSpan.className = `chat-author ${role === 'broadcaster' ? 'broadcaster-author' : 'viewer-author'}`;
+            authorSpan.textContent = role === 'broadcaster' ? 'Broadcaster:' : 'Viewer:';
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = text;
+            
+            msgDiv.appendChild(authorSpan);
+            msgDiv.appendChild(textSpan);
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function appendSystemMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'system-msg';
+            msgDiv.textContent = text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        startScreenBtn.addEventListener('click', async () => {
+            try {
+                log('Requesting screen share access...');
+                // Use getDisplayMedia to prompt the user to select a screen/window to share
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+                startScreenBtn.disabled = true;
+                startScreenBtn.innerHTML = '<i class="fa-solid fa-check"></i> Screen Shared';
+                startScreenBtn.classList.replace('bg-gray-900', 'bg-green-600');
+                startScreenBtn.classList.replace('hover:bg-gray-800', 'hover:bg-green-700');
+                
+                broadcasterStatus.classList.add('live');
+                startStreamBtn.disabled = false;
+                log('Local screen stream obtained successfully.');
+
+                // Handle the user clicking "Stop Sharing" on the native browser banner
+                localStream.getVideoTracks()[0].onended = () => {
+                     log('Screen share ended by user.');
+                     startScreenBtn.disabled = false;
+                     startScreenBtn.innerHTML = '<i class="fa-solid fa-display"></i> 1. Share Screen';
+                     startScreenBtn.classList.replace('bg-green-600', 'bg-gray-900');
+                     startScreenBtn.classList.replace('hover:bg-green-700', 'hover:bg-gray-800');
+                     broadcasterStatus.classList.remove('live');
+                     startStreamBtn.disabled = true;
+                     localVideo.srcObject = null;
+                     localStream = null;
+                };
+
+            } catch (error) {
+                log(`<span style="color:red">Error accessing screen: ${error.message}</span>`);
+                alert('Could not access screen share. Please ensure permissions are granted and the prompt is not dismissed.');
+            }
+        });
+
+        startStreamBtn.addEventListener('click', async () => {
+            if (!localStream) {
+                alert('Please share your screen first.');
+                return;
+            }
+
+            startStreamBtn.disabled = true;
+            connectingOverlay.classList.remove('hidden');
+            log('Starting connection process...');
+
+            // Configuration for WebRTC (usually contains STUN/TURN servers for real WAN connections)
+            // For local P2P, empty configuration is fine.
+            const servers = null; 
+
+            // 1. Create Peer Connections
+            localPeerConnection = new RTCPeerConnection(servers);
+            log('Created local peer connection object (Broadcaster)');
+            
+            remotePeerConnection = new RTCPeerConnection(servers);
+            log('Created remote peer connection object (Viewer)');
+
+            // 2. Setup ICE Candidate handling (The "address book" exchange)
+            // When local peer finds a candidate, give it to the remote peer
+            localPeerConnection.onicecandidate = e => {
+                if (e.candidate) {
+                    remotePeerConnection.addIceCandidate(e.candidate)
+                        .then(() => log('Remote peer added ICE Candidate successfully'))
+                        .catch(err => log(`Failed to add ICE candidate: ${err}`));
+                }
+            };
+
+            // When remote peer finds a candidate, give it to the local peer
+            remotePeerConnection.onicecandidate = e => {
+                if (e.candidate) {
+                    localPeerConnection.addIceCandidate(e.candidate)
+                        .then(() => log('Local peer added ICE Candidate successfully'))
+                        .catch(err => log(`Failed to add ICE candidate: ${err}`));
+                }
+            };
+
+            // 3. Add local tracks to the local peer connection
+            localStream.getTracks().forEach(track => {
+                localPeerConnection.addTrack(track, localStream);
+            });
+            log('Added local stream tracks to local peer connection');
+
+            // 4. Handle incoming stream on the remote peer connection
+            remotePeerConnection.ontrack = e => {
+                if (remoteVideo.srcObject !== e.streams[0]) {
+                    remoteVideo.srcObject = e.streams[0];
+                    log('Received remote track, attaching to Viewer video element');
+                    connectingOverlay.classList.add('hidden');
+                    viewerStatus.classList.add('live');
+                    startStreamBtn.innerHTML = '<i class="fa-solid fa-satellite-dish"></i> Streaming Live';
+                    startStreamBtn.classList.replace('bg-purple-600', 'bg-green-600');
+                }
+            };
+
+            // 5. Setup Data Channel for Chat
+            sendChannel = localPeerConnection.createDataChannel('sendDataChannel');
+            log('Created send data channel (Broadcaster)');
+            
+            sendChannel.onopen = () => {
+                log('Send channel state is: ' + sendChannel.readyState);
+                enableChatInterface();
+            };
+            sendChannel.onclose = () => log('Send channel state is: ' + sendChannel.readyState);
+
+            remotePeerConnection.ondatachannel = receiveChannelCallback;
+
+            try {
+                // 6. Create Offer (Broadcaster)
+                log('Creating offer...');
+                const offer = await localPeerConnection.createOffer();
+                
+                // 7. Set Local Description (Broadcaster)
+                await localPeerConnection.setLocalDescription(offer);
+                log('Local description set (Broadcaster)');
+
+                // --- In a real app, signaling server sends offer to viewer here ---
+                
+                // 8. Set Remote Description (Viewer)
+                await remotePeerConnection.setRemoteDescription(offer);
+                log('Remote description set (Viewer)');
+
+                // 9. Create Answer (Viewer)
+                log('Creating answer...');
+                const answer = await remotePeerConnection.createAnswer();
+
+                // 10. Set Local Description (Viewer)
+                await remotePeerConnection.setLocalDescription(answer);
+                log('Local description set (Viewer)');
+
+                // --- In a real app, signaling server sends answer back to broadcaster here ---
+
+                // 11. Set Remote Description (Broadcaster)
+                await localPeerConnection.setRemoteDescription(answer);
+                log('Remote description set (Broadcaster) - Handshake complete');
+
+            } catch (e) {
+                log(`<span style="color:red">Failed to create session description: ${e.toString()}</span>`);
+                connectingOverlay.classList.add('hidden');
+                startStreamBtn.disabled = false;
+            }
+        });
+
+        function receiveChannelCallback(event) {
+            log('Receive Channel Callback');
+            receiveChannel = event.channel;
+            receiveChannel.onmessage = handleReceiveMessage;
+            receiveChannel.onopen = () => {
+                log('Receive channel state is: ' + receiveChannel.readyState);
+                enableChatInterface();
+            };
+            receiveChannel.onclose = () => log('Receive channel state is: ' + receiveChannel.readyState);
+        }
+
+        function handleReceiveMessage(event) {
+            // Because we are simulating both sides, we need to know who sent it
+            // We pass a JSON object {role: '...', text: '...'}
+            try {
+                const data = JSON.parse(event.data);
+                appendChatMessage(data.role, data.text);
+            } catch (e) {
+                console.error("Failed to parse message", e);
+            }
+        }
+
+        function enableChatInterface() {
+            chatInput.disabled = false;
+            sendBtn.disabled = false;
+            chatStatus.textContent = 'Connected (P2P)';
+            chatStatus.classList.replace('bg-gray-200', 'bg-green-100');
+            chatStatus.classList.replace('text-gray-600', 'text-green-700');
+            appendSystemMessage('Data channel established. P2P Chat is live.');
+        }
+
+        window.sendMessage = function() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            
+            const role = chatRole.value; // 'broadcaster' or 'viewer'
+            const messageObj = { role: role, text: text };
+            const messageString = JSON.stringify(messageObj);
+
+            // In a real app, broadcaster sends via sendChannel, viewer via receiveChannel
+            // For this local demo, we just route it through whichever is open to simulate P2P
+            if (role === 'broadcaster' && sendChannel && sendChannel.readyState === 'open') {
+                 sendChannel.send(messageString);
+                 appendChatMessage(role, text); // Echo locally
+            } else if (role === 'viewer' && receiveChannel && receiveChannel.readyState === 'open') {
+                 receiveChannel.send(messageString);
+                 appendChatMessage(role, text); // Echo locally
+            } else {
+                 alert('Chat connection is not open yet.');
+            }
+            
+            chatInput.value = '';
+            chatInput.focus();
+        };
+
+        window.handleKeyPress = function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        };
+
+        // Handle cleanup on close
+        window.addEventListener('beforeunload', () => {
+            if (localPeerConnection) localPeerConnection.close();
+            if (remotePeerConnection) remotePeerConnection.close();
+        });
+
+    </script>
+</body>
+</html>
