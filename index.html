@@ -56,20 +56,35 @@
                     <i class="fa-solid fa-play-circle text-3xl"></i>
                     <span class="font-bold text-xl tracking-wider text-white">Stream<span class="text-twitch-purple">Pulse</span></span>
                 </div>
-                <p class="text-xs text-gray-400">Sign in with passwordless Email Magic Link <span class="text-amber-400/90 font-medium">(check spam folder)</span></p>
+                <p class="text-xs text-gray-400">Sign in to start streaming and chatting</p>
+                
+                <!-- Auth Mode Tabs -->
+                <div class="flex bg-[#1f1f23] p-1 rounded-lg mt-3 border border-[#26262c]">
+                    <button type="button" id="tabMagicLink" onclick="switchAuthTab('magic')" class="flex-1 py-1.5 text-xs font-semibold rounded-md bg-twitch-purple text-white transition">Magic Link</button>
+                    <button type="button" id="tabPassword" onclick="switchAuthTab('password')" class="flex-1 py-1.5 text-xs font-semibold rounded-md text-gray-400 hover:text-white transition">Email & Password</button>
+                </div>
             </div>
 
             <!-- Auth Box Content -->
             <div class="p-6">
                 <!-- Google Sign-In Instant Option -->
-                <button type="button" onclick="handleGoogleSignIn()" class="w-full bg-[#26262c] hover:bg-[#323239] text-white text-xs font-semibold py-2.5 rounded-lg border border-[#3a3a42] flex items-center justify-center space-x-2 transition mb-4">
+                <button type="button" onclick="handleGoogleSignIn()" class="w-full bg-[#26262c] hover:bg-[#323239] text-white text-xs font-semibold py-2.5 rounded-lg border border-[#3a3a42] flex items-center justify-center space-x-2 transition mb-3">
                     <i class="fa-brands fa-google text-red-400 text-sm"></i>
                     <span>Sign In with Google</span>
                 </button>
 
-                <div class="relative flex py-2 items-center mb-4">
+                <!-- School / Institutional Notice -->
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mb-4 text-[11px] text-amber-300/90 flex items-start gap-2">
+                    <i class="fa-solid fa-graduation-cap text-amber-400 text-sm mt-0.5 shrink-0"></i>
+                    <div>
+                        <span class="font-bold block text-amber-200">Using a School or Work Email?</span>
+                        School firewalls often block magic link emails. Switch to the <strong>Email & Password tab</strong> or use <strong>Google SSO</strong> to log in immediately!
+                    </div>
+                </div>
+
+                <div class="relative flex py-1 items-center mb-4">
                     <div class="flex-grow border-t border-[#26262c]"></div>
-                    <span class="flex-shrink mx-3 text-[10px] text-gray-500 uppercase font-semibold">Or Magic Link</span>
+                    <span class="flex-shrink mx-3 text-[10px] text-gray-500 uppercase font-semibold">Or Choose Auth Method</span>
                     <div class="flex-grow border-t border-[#26262c]"></div>
                 </div>
 
@@ -89,6 +104,31 @@
                     </button>
                 </form>
 
+                <!-- Password Auth Form (For School Accounts & Password Login) -->
+                <form id="passwordAuthForm" onsubmit="handlePasswordAuth(event)" class="space-y-3 hidden">
+                    <div id="pwdUsernameContainer" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Display Name / Channel Name</label>
+                        <input type="text" id="pwdUsername" placeholder="e.g. Alex" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Email Address</label>
+                        <input type="email" id="pwdEmail" required placeholder="you@school.edu" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Password</label>
+                        <input type="password" id="pwdPassword" required placeholder="••••••••" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <button type="submit" id="pwdSubmitBtn" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-bold py-2.5 rounded-lg transition shadow-lg shadow-twitch-purple/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-key"></i>
+                        <span id="pwdSubmitText">Sign In with Password</span>
+                    </button>
+                    <div class="text-center pt-1">
+                        <button type="button" onclick="togglePasswordMode()" id="pwdToggleText" class="text-xs text-twitch-purple hover:underline font-medium">
+                            Don't have an account? Sign Up
+                        </button>
+                    </div>
+                </form>
+
                 <!-- Magic Link Sent Pending Screen -->
                 <div id="magicLinkSentScreen" class="hidden text-center space-y-4 py-2">
                     <div class="w-16 h-16 rounded-full bg-twitch-purple/20 border border-twitch-purple/40 text-twitch-purple flex items-center justify-center mx-auto text-2xl animate-pulse">
@@ -103,7 +143,7 @@
                         Click the link inside the email to log in automatically on this device.
                     </p>
                     <button onclick="resetMagicLinkForm()" class="w-full bg-[#26262c] hover:bg-[#323239] text-gray-300 text-xs font-semibold py-2 rounded-lg border border-[#303036] transition">
-                        Use Different Email
+                        Use Different Email or Password Tab
                     </button>
                 </div>
 
@@ -400,7 +440,9 @@
             sendSignInLinkToEmail,
             isSignInWithEmailLink,
             signInWithEmailLink,
-            updateProfile
+            updateProfile,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import {
             getDatabase,
@@ -433,6 +475,80 @@
         window.dbOnDisconnect = onDisconnect;
 
         let currentUser = null;
+
+        window.switchAuthTab = function(mode) {
+            const tabMagic = document.getElementById('tabMagicLink');
+            const tabPassword = document.getElementById('tabPassword');
+            const magicForm = document.getElementById('magicLinkForm');
+            const pwdForm = document.getElementById('passwordAuthForm');
+            const sentScreen = document.getElementById('magicLinkSentScreen');
+
+            if (sentScreen) sentScreen.classList.add('hidden');
+            hideAuthError();
+
+            if (mode === 'magic') {
+                tabMagic.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md bg-twitch-purple text-white transition';
+                tabPassword.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md text-gray-400 hover:text-white transition';
+                magicForm.classList.remove('hidden');
+                pwdForm.classList.add('hidden');
+            } else {
+                tabPassword.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md bg-twitch-purple text-white transition';
+                tabMagic.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md text-gray-400 hover:text-white transition';
+                magicForm.classList.add('hidden');
+                pwdForm.classList.remove('hidden');
+            }
+        };
+
+        let isSignUpMode = false;
+        window.togglePasswordMode = function() {
+            isSignUpMode = !isSignUpMode;
+            const submitBtnText = document.getElementById('pwdSubmitText');
+            const toggleBtnText = document.getElementById('pwdToggleText');
+            const usernameContainer = document.getElementById('pwdUsernameContainer');
+
+            if (isSignUpMode) {
+                submitBtnText.innerText = 'Create Account';
+                toggleBtnText.innerText = 'Already have an account? Sign In';
+                usernameContainer.classList.remove('hidden');
+            } else {
+                submitBtnText.innerText = 'Sign In with Password';
+                toggleBtnText.innerText = "Don't have an account? Sign Up";
+                usernameContainer.classList.add('hidden');
+            }
+        };
+
+        window.handlePasswordAuth = async function(e) {
+            e.preventDefault();
+            hideAuthError();
+            const email = document.getElementById('pwdEmail').value.trim();
+            const password = document.getElementById('pwdPassword').value.trim();
+            const username = document.getElementById('pwdUsername').value.trim();
+
+            const btn = document.getElementById('pwdSubmitBtn');
+            btn.disabled = true;
+
+            try {
+                if (isSignUpMode) {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Creating Account...`;
+                    const res = await createUserWithEmailAndPassword(auth, email, password);
+                    if (username && res.user) {
+                        await updateProfile(res.user, { displayName: username });
+                    }
+                    showToast('Account created successfully!', 'success');
+                } else {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Signing In...`;
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast('Signed in successfully!', 'success');
+                }
+                document.getElementById('authOverlay').classList.add('hidden');
+            } catch (err) {
+                console.error("Password Auth error:", err);
+                showAuthError(err.message.replace('Firebase: ', ''));
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-key"></i> <span id="pwdSubmitText">${isSignUpMode ? 'Create Account' : 'Sign In with Password'}</span>`;
+            }
+        };
 
         // Check if user came back from clicking email magic link
         if (isSignInWithEmailLink(auth, window.location.href)) {
