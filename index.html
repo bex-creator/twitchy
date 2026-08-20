@@ -56,73 +56,55 @@
                     <i class="fa-solid fa-play-circle text-3xl"></i>
                     <span class="font-bold text-xl tracking-wider text-white">Stream<span class="text-twitch-purple">Pulse</span></span>
                 </div>
-                <p class="text-xs text-gray-400">Sign in or register to launch your channel <span class="text-amber-400/90 font-medium">(emails may land in spam)</span></p>
-            </div>
-
-            <!-- Form Tabs -->
-            <div id="authTabs" class="flex border-b border-[#26262c] bg-[#1f1f23]">
-                <button id="tabSignIn" onclick="switchAuthTab('signin')" class="flex-1 py-3 text-xs font-bold text-twitch-purple border-b-2 border-twitch-purple transition">
-                    Sign In
-                </button>
-                <button id="tabSignUp" onclick="switchAuthTab('signup')" class="flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition">
-                    Create Account
-                </button>
+                <p class="text-xs text-gray-400">Sign in with passwordless Email Magic Link <span class="text-amber-400/90 font-medium">(check spam folder)</span></p>
             </div>
 
             <!-- Auth Box Content -->
             <div class="p-6">
-                <!-- Sign In Form -->
-                <form id="signInForm" onsubmit="handleSignIn(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Email Address</label>
-                        <input type="email" id="signInEmail" required placeholder="you@example.com" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Password</label>
-                        <input type="password" id="signInPassword" required placeholder="••••••••" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
-                    </div>
-                    <button type="submit" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-bold py-2.5 rounded-lg transition shadow-lg shadow-twitch-purple/20">
-                        Sign In
-                    </button>
-                </form>
+                <!-- Google Sign-In Instant Option -->
+                <button type="button" onclick="handleGoogleSignIn()" class="w-full bg-[#26262c] hover:bg-[#323239] text-white text-xs font-semibold py-2.5 rounded-lg border border-[#3a3a42] flex items-center justify-center space-x-2 transition mb-4">
+                    <i class="fa-brands fa-google text-red-400 text-sm"></i>
+                    <span>Sign In with Google</span>
+                </button>
 
-                <!-- Sign Up Form -->
-                <form id="signUpForm" onsubmit="handleSignUp(event)" class="space-y-4 hidden">
+                <div class="relative flex py-2 items-center mb-4">
+                    <div class="flex-grow border-t border-[#26262c]"></div>
+                    <span class="flex-shrink mx-3 text-[10px] text-gray-500 uppercase font-semibold">Or Magic Link</span>
+                    <div class="flex-grow border-t border-[#26262c]"></div>
+                </div>
+
+                <!-- Passwordless Email Magic Link Form -->
+                <form id="magicLinkForm" onsubmit="handleSendMagicLink(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Channel / Display Name</label>
-                        <input type="text" id="signUpUsername" required placeholder="GamerPro" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Display / Channel Name (Optional)</label>
+                        <input type="text" id="magicLinkUsername" placeholder="e.g. GamerPro" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Email Address</label>
-                        <input type="email" id="signUpEmail" required placeholder="you@example.com" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                        <input type="email" id="magicLinkEmail" required placeholder="you@example.com" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Password</label>
-                        <input type="password" id="signUpPassword" required minlength="6" placeholder="••••••••" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
-                    </div>
-                    <button type="submit" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-bold py-2.5 rounded-lg transition shadow-lg shadow-twitch-purple/20">
-                        Create & Send Verification Email
+                    <button type="submit" id="sendMagicLinkBtn" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-bold py-2.5 rounded-lg transition shadow-lg shadow-twitch-purple/20 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Send 1-Click Magic Link</span>
                     </button>
                 </form>
 
-                <!-- Verification Pending -->
-                <div id="verifyPendingScreen" class="hidden text-center space-y-4 py-2">
-                    <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-2xl">
-                        <i class="fa-solid fa-envelope-circle-check"></i>
+                <!-- Magic Link Sent Pending Screen -->
+                <div id="magicLinkSentScreen" class="hidden text-center space-y-4 py-2">
+                    <div class="w-16 h-16 rounded-full bg-twitch-purple/20 border border-twitch-purple/40 text-twitch-purple flex items-center justify-center mx-auto text-2xl animate-pulse">
+                        <i class="fa-solid fa-paper-plane"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-bold text-white mb-1">Verify Your Email</h3>
-                        <p class="text-xs text-gray-300">We sent a verification link to:</p>
-                        <p id="verifyEmailTarget" class="text-xs font-mono text-twitch-purple font-bold mt-1">user@example.com</p>
+                        <h3 class="text-base font-bold text-white mb-1">Check Your Email!</h3>
+                        <p class="text-xs text-gray-300">We sent a 1-click passwordless sign-in link to:</p>
+                        <p id="magicEmailTarget" class="text-xs font-mono text-twitch-purple font-bold mt-1">user@example.com</p>
                     </div>
-                    <div class="space-y-2 pt-2">
-                        <button onclick="checkEmailVerified()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-lg transition">
-                            <i class="fa-solid fa-arrows-rotate mr-1"></i> I Have Verified My Email
-                        </button>
-                        <button onclick="resendVerificationEmail()" class="w-full bg-[#1f1f23] hover:bg-[#26262c] text-gray-300 text-xs font-semibold py-2 rounded-lg border border-[#2f2f35] transition">
-                            Resend Email
-                        </button>
-                    </div>
+                    <p class="text-[11px] text-gray-400 bg-[#1f1f23] p-3 rounded-lg border border-[#26262c]">
+                        Click the link inside the email to log in automatically on this device.
+                    </p>
+                    <button onclick="resetMagicLinkForm()" class="w-full bg-[#26262c] hover:bg-[#323239] text-gray-300 text-xs font-semibold py-2 rounded-lg border border-[#303036] transition">
+                        Use Different Email
+                    </button>
                 </div>
 
                 <div id="authErrorMsg" class="mt-4 p-2.5 rounded-lg bg-red-950/40 border border-red-500/30 text-red-400 text-xs text-center hidden"></div>
@@ -250,23 +232,24 @@
                 <video id="mainStreamVideo" class="w-full h-full object-contain" autoplay playsinline muted></video>
 
                 <!-- Placeholder Screen when offline -->
-            <div id="videoPlaceholder" class="absolute inset-0 bg-[#0e0e10] flex flex-col items-center justify-center p-6 text-center">
-                <div class="w-20 h-20 rounded-full bg-[#18181b] border border-[#26262c] flex items-center justify-center mb-4 text-twitch-purple shadow-xl">
-                    <i class="fa-solid fa-satellite-dish text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-white mb-1" id="placeholderTitle">Streamers Create Rooms</h3>
-                <p class="text-xs text-gray-400 max-w-md mb-6" id="placeholderDesc">
-                    Create your own live broadcast room or pick an active room created by a streamer from the sidebar directory.
-                </p>
-                <div class="flex flex-wrap gap-3 justify-center">
-                    <button onclick="openGoLiveModal()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-md">
-                        <i class="fa-solid fa-plus-circle"></i>
-                        <span>Create Broadcast Room</span>
-                    </button>
-                    <button onclick="promptAndJoinChannel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-lg shadow-emerald-600/30">
-                        <i class="fa-solid fa-tv"></i>
-                        <span>Join Channel</span>
-                    </button>
+                <div id="videoPlaceholder" class="absolute inset-0 bg-[#0e0e10] flex flex-col items-center justify-center p-6 text-center">
+                    <div class="w-20 h-20 rounded-full bg-[#18181b] border border-[#26262c] flex items-center justify-center mb-4 text-twitch-purple shadow-xl">
+                        <i class="fa-solid fa-satellite-dish text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-1" id="placeholderTitle">Streamers Create Rooms</h3>
+                    <p class="text-xs text-gray-400 max-w-md mb-6" id="placeholderDesc">
+                        Create your own live broadcast room or pick an active room created by a streamer from the sidebar directory.
+                    </p>
+                    <div class="flex flex-wrap gap-3 justify-center">
+                        <button onclick="openGoLiveModal()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-md">
+                            <i class="fa-solid fa-plus-circle"></i>
+                            <span>Create Broadcast Room</span>
+                        </button>
+                        <button onclick="promptAndJoinChannel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-lg shadow-emerald-600/30">
+                            <i class="fa-solid fa-tv"></i>
+                            <span>Join Channel</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -331,6 +314,16 @@
 
             <!-- Chat Input Box -->
             <div class="p-3 border-t border-[#26262c] bg-[#18181b]">
+                <form onsubmit="handleSendChat(event)" class="relative">
+                    <input type="text" id="chatInput" placeholder="Send a message..." class="w-full bg-[#1f1f23] text-xs text-gray-200 placeholder-gray-500 rounded-lg pl-3 pr-10 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    <button type="submit" class="absolute right-2 top-2 text-twitch-purple hover:text-white p-1 transition">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+            </div>
+        </aside>
+    </div>
+
     <!-- Go Live Modal (Channel / Room setup) -->
     <div id="goLiveModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#18181b] border border-[#26262c] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
@@ -400,12 +393,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            sendEmailVerification, 
-            updateProfile, 
             signOut, 
-            onAuthStateChanged 
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            sendSignInLinkToEmail,
+            isSignInWithEmailLink,
+            signInWithEmailLink,
+            updateProfile
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import {
             getDatabase,
@@ -416,7 +411,6 @@
             onDisconnect
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // Enforcing your exact Firebase config directly 
         const firebaseConfig = {
             apiKey: "AIzaSyA5P_AzDieM3ESRDHUKEG_2ynXyzO4k56s",
             authDomain: "maps-97c76.firebaseapp.com",
@@ -439,6 +433,35 @@
         window.dbOnDisconnect = onDisconnect;
 
         let currentUser = null;
+
+        // Check if user came back from clicking email magic link
+        if (isSignInWithEmailLink(auth, window.location.href)) {
+            let email = window.localStorage.getItem('emailForSignIn');
+            if (!email) {
+                email = window.prompt('Please enter your email address to confirm sign-in:');
+            }
+            if (email) {
+                signInWithEmailLink(auth, email, window.location.href)
+                    .then(async (result) => {
+                        window.localStorage.removeItem('emailForSignIn');
+                        const pendingUsername = window.localStorage.getItem('usernameForSignIn');
+                        if (pendingUsername && result.user && !result.user.displayName) {
+                            try {
+                                await updateProfile(result.user, { displayName: pendingUsername });
+                                window.localStorage.removeItem('usernameForSignIn');
+                            } catch(e) { console.warn(e); }
+                        }
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                        showToast('Signed in successfully via Magic Link!', 'success');
+                    })
+                    .catch((err) => {
+                        console.error('Magic link error:', err);
+                        showToast('Magic link error: ' + err.message.replace('Firebase: ', ''), 'error');
+                    });
+            }
+        }
 
         // Listen for live active rooms in Realtime Database created by streamers
         onValue(ref(db, 'rooms'), (snapshot) => {
@@ -468,158 +491,78 @@
                 if (userProfileHeader) userProfileHeader.classList.remove('hidden');
                 
                 updateHeaderUserProfile(user);
-
-                // Only auto-close overlay if email is verified
-                if (user.emailVerified && authOverlay) {
-                    authOverlay.classList.add('hidden');
-                }
+                if (authOverlay) authOverlay.classList.add('hidden');
             }
         });
 
-        // Automatically detect verification when returning to this browser tab
-        window.addEventListener('focus', async () => {
-            if (auth.currentUser) {
-                try {
-                    await auth.currentUser.reload();
-                    currentUser = auth.currentUser;
-                    window.currentUser = auth.currentUser;
-                    updateHeaderUserProfile(auth.currentUser);
-
-                    if (auth.currentUser.emailVerified) {
-                        const verifyPendingScreen = document.getElementById('verifyPendingScreen');
-                        if (verifyPendingScreen && !verifyPendingScreen.classList.contains('hidden')) {
-                            document.getElementById('authOverlay').classList.add('hidden');
-                            showToast('Email verified successfully! Welcome back.', 'success');
-                        }
-                    }
-                } catch(e) {
-                    console.log('Focus reload check:', e);
-                }
+        // Instant Google Authentication
+        window.handleGoogleSignIn = async function() {
+            try {
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(auth, provider);
+                currentUser = result.user;
+                window.currentUser = result.user;
+                updateHeaderUserProfile(result.user);
+                showToast(`Signed in with Google as ${result.user.displayName}!`, 'success');
+                document.getElementById('authOverlay').classList.add('hidden');
+            } catch(err) {
+                showAuthError(err.message.replace('Firebase: ', ''));
             }
-        });
+        };
 
-        window.openAuthModal = function(tab = 'signin') {
+        window.openAuthModal = function() {
             const authOverlay = document.getElementById('authOverlay');
             authOverlay.classList.remove('hidden');
-            
-            if (currentUser && !currentUser.emailVerified) {
-                document.getElementById('authTabs').classList.add('hidden');
-                document.getElementById('signInForm').classList.add('hidden');
-                document.getElementById('signUpForm').classList.add('hidden');
-                document.getElementById('verifyPendingScreen').classList.remove('hidden');
-                document.getElementById('verifyEmailTarget').innerText = currentUser.email;
-            } else {
-                document.getElementById('authTabs').classList.remove('hidden');
-                document.getElementById('verifyPendingScreen').classList.add('hidden');
-                switchAuthTab(tab);
-            }
+            if (window.resetMagicLinkForm) window.resetMagicLinkForm();
         };
 
         window.closeAuthOverlay = function() {
             document.getElementById('authOverlay').classList.add('hidden');
         };
 
-        window.handleSignIn = async function(e) {
+        window.handleSendMagicLink = async function(e) {
             e.preventDefault();
             hideAuthError();
-            const email = document.getElementById('signInEmail').value.trim();
-            const password = document.getElementById('signInPassword').value;
+            const email = document.getElementById('magicLinkEmail').value.trim();
+            const username = document.getElementById('magicLinkUsername').value.trim();
+
+            const actionCodeSettings = {
+                url: window.location.href.split('?')[0],
+                handleCodeInApp: true
+            };
 
             try {
-                const userCred = await signInWithEmailAndPassword(auth, email, password);
-                await userCred.user.reload();
-                currentUser = userCred.user;
-                window.currentUser = userCred.user;
-                updateHeaderUserProfile(userCred.user);
+                const btn = document.getElementById('sendMagicLinkBtn');
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Sending Magic Link...`;
 
-                if (!userCred.user.emailVerified) {
-                    document.getElementById('authTabs').classList.add('hidden');
-                    document.getElementById('signInForm').classList.add('hidden');
-                    document.getElementById('signUpForm').classList.add('hidden');
-                    document.getElementById('verifyPendingScreen').classList.remove('hidden');
-                    document.getElementById('verifyEmailTarget').innerText = userCred.user.email;
-                    showToast('Please verify your email before creating streams.', 'info');
-                } else {
-                    showToast('Signed in successfully!', 'success');
-                    closeAuthOverlay();
-                }
-            } catch (err) {
-                showAuthError(err.message.replace('Firebase: ', ''));
-            }
-        };
-
-        window.handleSignUp = async function(e) {
-            e.preventDefault();
-            hideAuthError();
-            const username = document.getElementById('signUpUsername').value.trim();
-            const email = document.getElementById('signUpEmail').value.trim();
-            const password = document.getElementById('signUpPassword').value;
-
-            try {
-                // 1. Create User
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await sendSignInLinkToEmail(auth, email, actionCodeSettings);
                 
-                // 2. Set Username
-                try {
-                    await updateProfile(userCredential.user, { displayName: username });
-                } catch(profileErr) {
-                    console.warn("Could not update profile:", profileErr);
+                window.localStorage.setItem('emailForSignIn', email);
+                if (username) {
+                    window.localStorage.setItem('usernameForSignIn', username);
                 }
 
-                // 3. Force Verification Email
-                try {
-                    await sendEmailVerification(userCredential.user);
-                    showToast('Verification email sent! Check inbox & spam folder.', 'success');
-                } catch(emailErr) {
-                    console.error("Email send error:", emailErr);
-                    showAuthError("Account created, but email send failed: " + emailErr.message);
-                }
-
-                // Display verification prompt screen
-                document.getElementById('authTabs').classList.add('hidden');
-                document.getElementById('signInForm').classList.add('hidden');
-                document.getElementById('signUpForm').classList.add('hidden');
-                document.getElementById('verifyPendingScreen').classList.remove('hidden');
-                document.getElementById('verifyEmailTarget').innerText = email;
-
+                document.getElementById('magicLinkForm').classList.add('hidden');
+                document.getElementById('magicLinkSentScreen').classList.remove('hidden');
+                document.getElementById('magicEmailTarget').innerText = email;
+                showToast('Magic Link sent! Check your email inbox & spam folder.', 'success');
             } catch (err) {
-                console.error("Signup error:", err);
+                console.error("Magic link send error:", err);
                 showAuthError(err.message.replace('Firebase: ', ''));
+            } finally {
+                const btn = document.getElementById('sendMagicLinkBtn');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Send 1-Click Magic Link</span>`;
+                }
             }
         };
 
-        window.checkEmailVerified = async function() {
-            if (!auth.currentUser) return;
-            try {
-                await auth.currentUser.reload();
-                currentUser = auth.currentUser;
-                window.currentUser = auth.currentUser;
-                updateHeaderUserProfile(auth.currentUser);
-
-                if (auth.currentUser.emailVerified) {
-                    showToast('Email verified successfully!', 'success');
-                    document.getElementById('authOverlay').classList.add('hidden');
-                } else {
-                    showAuthError('Email not verified yet. Please check your inbox and click the verification link.');
-                }
-            } catch (err) {
-                showAuthError(err.message);
-            }
-        };
-
-        window.resendVerificationEmail = async function() {
-            if (!auth.currentUser) return;
-            try {
-                await sendEmailVerification(auth.currentUser);
-                showToast('Verification email resent!', 'info');
-                hideAuthError();
-            } catch (err) {
-                if (err.code === 'auth/too-many-requests') {
-                    showAuthError('Too many attempts. Please wait a few minutes before trying again.');
-                } else {
-                    showAuthError(err.message.replace('Firebase: ', ''));
-                }
-            }
+        window.resetMagicLinkForm = function() {
+            document.getElementById('magicLinkForm').classList.remove('hidden');
+            document.getElementById('magicLinkSentScreen').classList.add('hidden');
+            hideAuthError();
         };
 
         window.handleSignOut = async function() {
@@ -628,26 +571,6 @@
                 showToast('Signed out', 'info');
             } catch (err) {
                 console.error(err);
-            }
-        };
-
-        window.switchAuthTab = function(tab) {
-            hideAuthError();
-            const signInForm = document.getElementById('signInForm');
-            const signUpForm = document.getElementById('signUpForm');
-            const tabSignIn = document.getElementById('tabSignIn');
-            const tabSignUp = document.getElementById('tabSignUp');
-
-            if (tab === 'signin') {
-                signInForm.classList.remove('hidden');
-                signUpForm.classList.add('hidden');
-                tabSignIn.className = "flex-1 py-3 text-xs font-bold text-twitch-purple border-b-2 border-twitch-purple transition";
-                tabSignUp.className = "flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition";
-            } else {
-                signUpForm.classList.remove('hidden');
-                signInForm.classList.add('hidden');
-                tabSignUp.className = "flex-1 py-3 text-xs font-bold text-twitch-purple border-b-2 border-twitch-purple transition";
-                tabSignIn.className = "flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition";
             }
         };
 
@@ -663,21 +586,15 @@
 
         function updateHeaderUserProfile(user) {
             if (!user) return;
-            const name = user.displayName || user.email.split('@')[0];
+            const name = user.displayName || user.email?.split('@')[0] || 'User';
             document.getElementById('userHeaderName').innerText = name;
             document.getElementById('userHeaderAvatar').innerText = name.charAt(0).toUpperCase();
             
             const badge = document.getElementById('userVerificationBadge');
             if (badge) {
-                if (!user.emailVerified) {
-                    badge.innerText = 'Unverified';
-                    badge.className = 'text-[9px] text-amber-400 font-medium';
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.innerText = '✓ Verified';
-                    badge.className = 'text-[9px] text-emerald-400 font-semibold';
-                    badge.classList.remove('hidden');
-                }
+                badge.innerText = '✓ Verified';
+                badge.className = 'text-[9px] text-emerald-400 font-semibold';
+                badge.classList.remove('hidden');
             }
 
             const avatarInit = document.getElementById('channelAvatarInitial');
@@ -971,7 +888,6 @@
 
             updateRealViewerUI(totalViewers);
 
-            // Sync viewer count to Realtime DB room entry
             if (currentRoomDbRef && window.dbSet) {
                 const roomKey = channelNameToP2PKey(currentChannelName);
                 window.dbSet(window.dbRef(window.db, `rooms/${roomKey}/viewers`), totalViewers);
@@ -1129,20 +1045,9 @@
                 const hrs = String(Math.floor(elapsed / 3600)).padStart(2, '0');
                 const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
                 const secs = String(elapsed % 60).padStart(2, '0');
-                document.getElementById('streamTime').innerText = `${hrs}:${mins}:${secs}`;
+                const timeElem = document.getElementById('streamTime');
+                if (timeElem) timeElem.innerText = `${hrs}:${mins}:${secs}`;
             }, 1000);
-        }
-
-        function togglePlayPause() {
-            if (videoElem.paused) videoElem.play();
-            else videoElem.pause();
-        }
-
-        function toggleMute() { videoElem.muted = !videoElem.muted; }
-        function changeVolume(val) { videoElem.volume = val; }
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) videoElem.parentElement.requestFullscreen();
-            else document.exitFullscreen();
         }
 
         function showToast(message, type = 'info') {
