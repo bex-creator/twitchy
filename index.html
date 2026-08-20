@@ -200,6 +200,11 @@
                 
                 // Specific view logic
                 if (viewName === 'storefront') {
+                    if (!state.currentUser) {
+                         console.warn("Attempted to view storefront without auth.");
+                         switchView('auth');
+                         return;
+                    }
                     renderStorefront();
                 }
             } else {
@@ -212,14 +217,28 @@
             // Show a loading state
             views.storefront.innerHTML = `<div class="w-full text-center text-cyan-400 mt-20 flex flex-col items-center"><i class="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p class="text-lg">Fetching Apps from Network...</p></div>`;
 
+            // Security check: ensure we have a user before querying
+            if (!state.currentUser) {
+                views.storefront.innerHTML = `<div class="w-full text-center text-red-500 mt-20"><p>Authentication required to access Nexus Database.</p></div>`;
+                return;
+            }
+
             try {
                 // Ensure Firebase module has finished loading
                 while (!window.db || !window.getDocs || !window.collection) {
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
 
-                // Fetch real apps from Firestore "apps" collection
-                const querySnapshot = await window.getDocs(window.collection(window.db, "apps"));
+                // Get App ID - Fallback to the one in the config if global is missing
+                const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.appId;
+                
+                // Construct the strict path required by Firestore Rules
+                const collectionPath = `artifacts/${appId}/public/data/nexus_apps`;
+                console.log("Querying path:", collectionPath);
+
+                // Fetch real apps from the strict path
+                const querySnapshot = await window.getDocs(window.collection(window.db, collectionPath));
+                
                 const fetchedApps = [];
                 querySnapshot.forEach((doc) => {
                     fetchedApps.push({ id: doc.id, ...doc.data() });
