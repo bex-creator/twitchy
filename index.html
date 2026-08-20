@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamPulse P2P - Decentralized Live Streaming</title>    <!-- Tailwind CSS -->
+    <title>StreamPulse P2P - Live Streaming Channels</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,34 +27,108 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- PeerJS for WebRTC P2P Signal handling without Firebase -->
+    <!-- PeerJS for WebRTC P2P Signal handling -->
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <!-- Google Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Custom scrollbar for chat and sidebars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0e0e10; }
         ::-webkit-scrollbar-thumb { background: #2f2f35; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #9146FF; }
-        
-        /* Video overlay gradient */
         .video-gradient {
             background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0) 100%);
         }
-        
-        .pulse-red {
-            animation: pulse-red 2s infinite;
-        }
-        @keyframes pulse-red {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
     </style>
 </head>
-<body class="h-full flex flex-col overflow-hidden select-none">
+<body class="h-full flex flex-col overflow-hidden select-none bg-[#0e0e10]">
+
+    <!-- Authentication & Verification Modal Overlay -->
+    <div id="authOverlay" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-[#18181b] border border-[#26262c] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative">
+            <button onclick="closeAuthOverlay()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-[#26262c] text-center">
+                <div class="inline-flex items-center space-x-2 text-twitch-purple mb-2">
+                    <i class="fa-solid fa-play-circle text-3xl"></i>
+                    <span class="font-bold text-xl tracking-wider text-white">Stream<span class="text-twitch-purple">Pulse</span></span>
+                </div>
+                <p class="text-xs text-gray-400">Sign in or register to launch your channel <span class="text-amber-400/90 font-medium">(emails may land in spam)</span></p>
+            </div>
+
+            <!-- Form Tabs -->
+            <div id="authTabs" class="flex border-b border-[#26262c] bg-[#1f1f23]">
+                <button id="tabSignIn" onclick="switchAuthTab('signin')" class="flex-1 py-3 text-xs font-bold text-twitch-purple border-b-2 border-twitch-purple transition">
+                    Sign In
+                </button>
+                <button id="tabSignUp" onclick="switchAuthTab('signup')" class="flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition">
+                    Create Account
+                </button>
+            </div>
+
+            <!-- Auth Box Content -->
+            <div class="p-6">
+                <!-- Sign In Form -->
+                <form id="signInForm" onsubmit="handleSignIn(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Email Address</label>
+                        <input type="email" id="signInEmail" required placeholder="you@example.com" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Password</label>
+                        <input type="password" id="signInPassword" required placeholder="••••••••" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <button type="submit" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-bold py-2.5 rounded-lg transition shadow-lg shadow-twitch-purple/20">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="signUpForm" onsubmit="handleSignUp(event)" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Channel / Display Name</label>
+                        <input type="text" id="signUpUsername" required placeholder="GamerPro" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Email Address</label>
+                        <input type="email" id="signUpEmail" required placeholder="you@example.com" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Password</label>
+                        <input type="password" id="signUpPassword" required minlength="6" placeholder="••••••••" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <button type="submit" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-bold py-2.5 rounded-lg transition shadow-lg shadow-twitch-purple/20">
+                        Create & Send Verification Email
+                    </button>
+                </form>
+
+                <!-- Verification Pending -->
+                <div id="verifyPendingScreen" class="hidden text-center space-y-4 py-2">
+                    <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-envelope-circle-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white mb-1">Verify Your Email</h3>
+                        <p class="text-xs text-gray-300">We sent a verification link to:</p>
+                        <p id="verifyEmailTarget" class="text-xs font-mono text-twitch-purple font-bold mt-1">user@example.com</p>
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        <button onclick="checkEmailVerified()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-lg transition">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i> I Have Verified My Email
+                        </button>
+                        <button onclick="resendVerificationEmail()" class="w-full bg-[#1f1f23] hover:bg-[#26262c] text-gray-300 text-xs font-semibold py-2 rounded-lg border border-[#2f2f35] transition">
+                            Resend Email
+                        </button>
+                    </div>
+                </div>
+
+                <div id="authErrorMsg" class="mt-4 p-2.5 rounded-lg bg-red-950/40 border border-red-500/30 text-red-400 text-xs text-center hidden"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Top Navigation Header -->
     <header class="h-14 bg-[#18181b] border-b border-[#26262c] flex items-center justify-between px-4 z-30 shrink-0">
@@ -62,39 +137,51 @@
             <a href="#" class="flex items-center space-x-2 text-twitch-purple hover:opacity-90 transition">
                 <i class="fa-solid fa-play-circle text-2xl"></i>
                 <span class="font-bold text-lg tracking-wider text-white">Stream<span class="text-twitch-purple">Pulse</span></span>
-                <span class="bg-twitch-purple/20 text-twitch-purple text-[10px] font-bold px-1.5 py-0.5 rounded border border-twitch-purple/30">P2P</span>
             </a>
             <nav class="hidden md:flex items-center space-x-4 text-sm font-semibold">
-                <a href="#" class="text-white hover:text-twitch-purple transition border-b-2 border-twitch-purple pb-3 mt-3">Browse</a>
+                <a href="#" class="text-white hover:text-twitch-purple transition border-b-2 border-twitch-purple pb-3 mt-3">Browse Channels</a>
                 <a href="#" class="text-gray-400 hover:text-white transition pb-3 mt-3">Following</a>
-                <a href="#" class="text-gray-400 hover:text-white transition pb-3 mt-3">Esports</a>
             </nav>
         </div>
 
-        <!-- Search Bar -->
+        <!-- Search Channels Bar -->
         <div class="hidden sm:flex items-center flex-1 max-w-md mx-6">
             <div class="relative w-full">
-                <input type="text" placeholder="Search streams, channels, or games..." class="w-full bg-[#1f1f23] text-sm text-gray-200 placeholder-gray-500 rounded-l-md px-4 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                <input type="text" id="globalChannelSearch" oninput="filterChannelsList()" placeholder="Search live channels or categories..." class="w-full bg-[#1f1f23] text-sm text-gray-200 placeholder-gray-500 rounded-l-md px-4 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
                 <button class="absolute right-0 top-0 bottom-0 px-4 bg-[#26262c] hover:bg-[#323239] rounded-r-md border border-l-0 border-[#303036] text-gray-400">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
         </div>
 
-        <!-- User Controls / Stream Actions -->
+        <!-- Channel Actions & User Controls -->
         <div class="flex items-center space-x-3">
             <button id="goLiveBtn" onclick="openGoLiveModal()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs sm:text-sm font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-md flex items-center space-x-2 transition shadow-lg shadow-twitch-purple/20">
-                <i class="fa-solid fa-broadcast-tower"></i>
-                <span>Go Live</span>
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Create Room</span>
             </button>
-            <button id="joinStreamBtn" onclick="joinChannel('twp2p-main-channel')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-md flex items-center space-x-2 transition shadow-lg shadow-emerald-600/20">
-                <i class="fa-solid fa-play"></i>
-                <span>Join Stream</span>
+            <button id="joinStreamBtn" onclick="promptAndJoinChannel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-md flex items-center space-x-2 transition shadow-lg shadow-emerald-600/20">
+                <i class="fa-solid fa-tv"></i>
+                <span>Join Channel</span>
             </button>
             <div class="h-6 w-[1px] bg-[#26262c] mx-1"></div>
-            <div class="flex items-center space-x-2 cursor-pointer p-1 hover:bg-[#26262c] rounded-md transition">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-xs text-white">
-                    ME
+            
+            <div id="authHeaderContainer">
+                <button id="headerSignInBtn" onclick="openAuthModal('signin')" class="bg-[#1f1f23] hover:bg-[#26262c] text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#26262c] flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-user-lock text-twitch-purple text-xs"></i>
+                    <span>Sign In</span>
+                </button>
+
+                <div id="userProfileHeader" class="hidden flex items-center space-x-2 bg-[#1f1f23] border border-[#26262c] px-2 py-1 rounded-lg">
+                    <div id="userHeaderAvatar" class="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center font-bold text-xs text-white uppercase">
+                        U
+                    </div>
+                    <div class="hidden md:block text-left">
+                        <div id="userHeaderName" class="text-xs font-bold text-white truncate max-w-[100px]">User</div>
+                    </div>
+                    <button onclick="handleSignOut()" title="Sign Out" class="text-gray-400 hover:text-red-400 ml-1 p-1 transition text-xs">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -103,393 +190,203 @@
     <!-- Main Application Container -->
     <div class="flex-1 flex overflow-hidden relative">
         
-        <!-- Left Sidebar: Channels & Streams -->
-        <aside id="sidebar" class="w-16 lg:w-60 bg-[#1f1f23] border-r border-[#26262c] flex flex-col justify-between shrink-0 transition-all duration-200 z-20">
-            <div class="p-3">
+        <!-- Left Sidebar: Active Channels List -->
+        <aside id="sidebar" class="w-20 lg:w-64 bg-[#1f1f23] border-r border-[#26262c] flex flex-col justify-between shrink-0 transition-all duration-200 z-20">
+            <div class="p-3 overflow-y-auto">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400 hidden lg:block">Active P2P Stream</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400 hidden lg:block">Active Streamer Rooms</span>
                     <i class="fa-solid fa-signal text-gray-400 text-xs hidden lg:block"></i>
                 </div>
                 
-                <!-- Stream List (Only Real P2P Node Info) -->
-                <div class="space-y-2" id="recommendedChannels">
-                    <!-- Standard 1-Click Public Channels -->
-                    <div onclick="joinChannel('twp2p-main-channel')" class="channel-item flex items-center p-2 rounded-md bg-[#26262c]/60 border border-twitch-purple/30 cursor-pointer hover:bg-[#26262c] transition group">
-                        <div class="relative shrink-0">
-                            <div class="w-9 h-9 rounded-full bg-twitch-purple/30 border border-twitch-purple flex items-center justify-center text-twitch-purple font-bold text-xs group-hover:scale-105 transition">
-                                <i class="fa-solid fa-play"></i>
-                            </div>
-                            <span id="p2pLiveBadge" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#1f1f23]"></span>
-                        </div>
-                        <div class="ml-3 hidden lg:block overflow-hidden flex-1">
-                            <div class="flex items-center justify-between">
-                                <span class="font-semibold text-xs text-white truncate" id="sidebarChannelName">Main Channel</span>
-                                <span class="text-[10px] text-gray-400 flex items-center space-x-1 font-mono">
-                                    <span id="sidebarViewerCount">0</span>
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-emerald-400 truncate font-medium" id="sidebarCategory">Click to Join Instantly</p>
-                        </div>
-                    </div>
-
-                    <div onclick="joinChannel('twp2p-gaming-channel')" class="channel-item flex items-center p-2 rounded-md bg-[#18181b] border border-[#26262c] cursor-pointer hover:bg-[#26262c] transition group">
-                        <div class="relative shrink-0">
-                            <div class="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-bold text-xs group-hover:scale-105 transition">
-                                <i class="fa-solid fa-gamepad"></i>
-                            </div>
-                        </div>
-                        <div class="ml-3 hidden lg:block overflow-hidden flex-1">
-                            <span class="font-semibold text-xs text-white truncate block">Gaming Channel</span>
-                            <p class="text-[11px] text-gray-400 truncate">Click to Join</p>
-                        </div>
-                    </div>
+                <!-- Live Channels Interactive List -->
+                <div id="liveChannelsContainer" class="space-y-1">
+                    <!-- Dynamic streamer created rooms rendered here -->
                 </div>
 
-                <div class="mt-6 hidden lg:block">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Connected Mesh Peers</span>
-                    <div id="peerList" class="space-y-1 text-xs text-gray-400">
-                        <div class="text-[11px] italic text-gray-500" id="noPeersText">No other peers connected</div>
+                <!-- Custom Channel Name Join Input -->
+                <div class="mt-6 pt-4 border-t border-[#26262c]">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400 hidden lg:block mb-2">Connect to Channel</span>
+                    <form onsubmit="handleQuickJoin(event)" class="space-y-2">
+                        <input type="text" id="customRoomInput" placeholder="Enter Channel Name..." class="w-full bg-[#18181b] text-xs text-gray-200 placeholder-gray-500 rounded-lg px-2.5 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                        <button type="submit" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-semibold py-1.5 rounded-lg transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-plug text-[11px]"></i>
+                            <span class="hidden lg:inline">Tune In</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Active Session Badge -->
+                <div id="activeChannelCard" class="hidden mt-4 p-2.5 rounded-lg bg-[#26262c]/60 border border-twitch-purple/40">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold text-twitch-purple">Currently Watching</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    <div class="font-semibold text-xs text-white truncate mt-1" id="sidebarChannelName">--</div>
+                    <div class="text-[10px] text-gray-400 mt-1 flex items-center justify-between">
+                        <span>Viewers:</span>
+                        <span id="sidebarViewerCount" class="font-mono text-emerald-400">1</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Sidebar Footer Status -->
+            <!-- Sidebar Network Status Footer -->
             <div class="p-3 border-t border-[#26262c] hidden lg:block">
                 <div class="bg-[#18181b] p-2.5 rounded-lg border border-[#26262c]">
-                    <div class="text-[11px] text-gray-400 font-medium">P2P Network Node</div>
+                    <div class="text-[11px] text-gray-400 font-medium">Peer-to-Peer Network</div>
                     <div class="flex items-center justify-between mt-1">
                         <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> WebRTC Active
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Connected
                         </span>
-                        <span id="p2pLatency" class="text-[10px] text-gray-500 font-mono">&lt;20ms</span>
+                        <span class="text-[10px] text-gray-500 font-mono">&lt;15ms</span>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Center Stage: Stream Player & Channel Info -->
+        <!-- Center Stage: Stream Player & Channel Details -->
         <main class="flex-1 flex flex-col bg-[#0e0e10] overflow-y-auto min-w-0">
-            
-            <!-- Video Player Container -->
-            <div class="relative w-full bg-black aspect-video max-h-[70vh] flex items-center justify-center group overflow-hidden">
-                
-                <!-- Main HTML5 Video Element -->
+            <div class="relative w-full bg-black aspect-video max-h-[68vh] flex items-center justify-center group overflow-hidden">
                 <video id="mainStreamVideo" class="w-full h-full object-contain" autoplay playsinline muted></video>
 
-                <!-- Screen Share Canvas Preview Fallback/Generator -->
-                <canvas id="demoStreamCanvas" class="w-full h-full object-contain hidden"></canvas>
-
-                <!-- Offline / Connecting Overlay -->
-                <div id="videoPlaceholder" class="absolute inset-0 bg-[#0e0e10] flex flex-col items-center justify-center p-6 text-center">
-                    <div class="w-20 h-20 rounded-full bg-[#18181b] border border-[#26262c] flex items-center justify-center mb-4 text-twitch-purple shadow-xl">
-                        <i class="fa-solid fa-satellite-dish text-3xl"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-1" id="placeholderTitle">Stream Hub Ready</h3>
-                    <p class="text-xs text-gray-400 max-w-md mb-6" id="placeholderDesc">
-                        Start broadcasting your screen peer-to-peer or click below to join the live public stream instantly.
-                    </p>
-                    <div class="flex flex-wrap gap-3 justify-center">
-                        <button onclick="openGoLiveModal()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-semibold px-4 py-2 rounded-md flex items-center space-x-2 transition shadow-md">
-                            <i class="fa-solid fa-desktop"></i>
-                            <span>Start Screen Share</span>
-                        </button>
-                        <button onclick="joinChannel('twp2p-main-channel')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-md flex items-center space-x-2 transition shadow-lg shadow-emerald-600/30">
-                            <i class="fa-solid fa-circle-play text-sm"></i>
-                            <span>Join Stream Now</span>
-                        </button>
-                    </div>
+                <!-- Placeholder Screen when offline -->
+            <div id="videoPlaceholder" class="absolute inset-0 bg-[#0e0e10] flex flex-col items-center justify-center p-6 text-center">
+                <div class="w-20 h-20 rounded-full bg-[#18181b] border border-[#26262c] flex items-center justify-center mb-4 text-twitch-purple shadow-xl">
+                    <i class="fa-solid fa-satellite-dish text-3xl"></i>
                 </div>
-
-                <!-- Live Stream Banner Overlay (Top Left) -->
-                <div id="liveOverlayHeader" class="absolute top-4 left-4 flex items-center space-x-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span class="bg-red-600 text-white font-bold text-[11px] px-2 py-0.5 rounded tracking-wide uppercase flex items-center gap-1.5 shadow-md">
-                        <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> LIVE
-                    </span>
-                    <span id="streamQualityTag" class="bg-black/60 backdrop-blur-md text-gray-200 text-[11px] px-2 py-0.5 rounded border border-white/10 font-mono">
-                        1080p60 WebRTC
-                    </span>
-                </div>
-
-                <!-- Custom Player Controls Bar (Bottom) -->
-                <div id="playerControls" class="absolute bottom-0 inset-x-0 video-gradient p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                    <!-- Progress / Scrub bar (Live indicator) -->
-                    <div class="w-full bg-white/20 h-1 rounded mb-3 overflow-hidden">
-                        <div class="bg-twitch-purple h-full w-full"></div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <!-- Play / Pause -->
-                            <button id="playPauseBtn" onclick="togglePlayPause()" class="text-white hover:text-twitch-purple transition">
-                                <i class="fa-solid fa-pause text-lg"></i>
-                            </button>
-                            <!-- Mute / Unmute -->
-                            <div class="flex items-center space-x-2 group/vol">
-                                <button id="muteBtn" onclick="toggleMute()" class="text-white hover:text-twitch-purple transition">
-                                    <i class="fa-solid fa-volume-high text-lg" id="muteIcon"></i>
-                                </button>
-                                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)" class="w-16 accent-twitch-purple h-1 cursor-pointer">
-                            </div>
-                            <!-- Stream Uptime -->
-                            <span id="streamTime" class="text-xs text-gray-300 font-mono">00:00:00</span>
-                        </div>
-
-                        <div class="flex items-center space-x-3">
-                            <!-- Source Switcher (When host) -->
-                            <button id="screenShareToggle" onclick="toggleSourceScreen()" title="Switch Screen / Webcam" class="hidden text-white hover:text-twitch-purple transition bg-black/40 p-1.5 rounded border border-white/10 text-xs">
-                                <i class="fa-solid fa-display mr-1"></i> Screen
-                            </button>
-                            <!-- Picture in Picture -->
-                            <button onclick="togglePip()" title="Picture in Picture" class="text-gray-300 hover:text-white transition">
-                                <i class="fa-solid fa-clone text-base"></i>
-                            </button>
-                            <!-- Fullscreen -->
-                            <button onclick="toggleFullscreen()" title="Fullscreen" class="text-gray-300 hover:text-white transition">
-                                <i class="fa-solid fa-expand text-base"></i>
-                            </button>
-                        </div>
-                    </div>
+                <h3 class="text-xl font-bold text-white mb-1" id="placeholderTitle">Streamers Create Rooms</h3>
+                <p class="text-xs text-gray-400 max-w-md mb-6" id="placeholderDesc">
+                    Create your own live broadcast room or pick an active room created by a streamer from the sidebar directory.
+                </p>
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <button onclick="openGoLiveModal()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-md">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>Create Broadcast Room</span>
+                    </button>
+                    <button onclick="promptAndJoinChannel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 transition shadow-lg shadow-emerald-600/30">
+                        <i class="fa-solid fa-tv"></i>
+                        <span>Join Channel</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Stream Meta & Channel Info Bar -->
+            <!-- Channel Details Section -->
             <div class="p-4 sm:p-6 bg-[#0e0e10]">
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-6 border-b border-[#26262c]">
-                    
-                    <!-- Channel Avatar + Info -->
                     <div class="flex items-start space-x-4">
-                        <div class="relative">
-                            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 p-0.5">
-                                <img id="channelAvatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=60" class="w-full h-full rounded-full object-cover">
-                            </div>
-                            <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-red-600 text-[9px] font-bold px-1.5 py-0.2 rounded text-white uppercase">LIVE</span>
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white text-lg shrink-0" id="channelAvatarInitial">
+                            S
                         </div>
                         <div>
-                            <h1 id="streamTitleDisplay" class="text-lg sm:text-xl font-bold text-white tracking-tight">Decentralized WebRTC Screen Sharing & Gaming Stream</h1>
-                            <div class="flex flex-wrap items-center gap-2 mt-1">
-                                <span id="broadcasterName" class="font-semibold text-sm text-twitch-purple">StreamerHost_P2P</span>
-                                <span class="text-gray-600 text-xs">•</span>
-                                <span id="streamCategoryBadge" class="text-xs bg-[#1f1f23] text-gray-300 px-2 py-0.5 rounded border border-[#2f2f35] font-medium">Software & Technology</span>
-                                <span class="text-xs bg-twitch-purple/10 text-twitch-purple border border-twitch-purple/20 px-2 py-0.5 rounded font-medium">Peer-To-Peer</span>
+                            <div class="flex items-center space-x-2">
+                                <h1 class="text-xl font-bold text-white" id="channelNameDisplay">Select a Live Channel</h1>
+                                <span class="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 uppercase tracking-wider">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> Live
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-300 font-medium mt-0.5" id="streamTitleDisplay">Interactive Live Streaming Network</p>
+                            <div class="flex items-center space-x-3 mt-2 text-xs text-gray-400">
+                                <span class="text-twitch-purple font-semibold hover:underline cursor-pointer" id="broadcasterName">Streamer Host</span>
+                                <span>•</span>
+                                <span class="bg-[#1f1f23] px-2 py-0.5 rounded border border-[#26262c] text-gray-300">Software & Tech</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Stream Action Buttons & Metrics -->
-                    <div class="flex flex-wrap items-center gap-3">
-                        <button id="followBtn" onclick="toggleFollow()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-semibold px-4 py-2 rounded-md flex items-center space-x-2 transition shadow-md">
-                            <i class="fa-regular fa-heart" id="followIcon"></i>
-                            <span id="followText">Follow</span>
+                    <div class="flex items-center space-x-3 self-end md:self-start">
+                        <button onclick="copyShareLink()" class="bg-[#1f1f23] hover:bg-[#26262c] border border-[#26262c] text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center space-x-2 transition">
+                            <i class="fa-solid fa-share-nodes text-twitch-purple"></i>
+                            <span>Share Channel</span>
                         </button>
-                        <button onclick="copyShareLink()" class="bg-[#1f1f23] hover:bg-[#26262c] text-gray-200 text-sm font-semibold px-3 py-2 rounded-md border border-[#2f2f35] flex items-center space-x-2 transition">
-                            <i class="fa-solid fa-share-nodes"></i>
-                            <span>Share Link</span>
-                        </button>
-                        <div class="flex items-center space-x-3 bg-[#18181b] px-3 py-1.5 rounded-md border border-[#26262c]">
-                            <div class="flex items-center space-x-1.5 text-red-500 font-bold text-sm">
-                                <i class="fa-solid fa-user text-xs"></i>
-                                <span id="activeViewersCount">1</span>
-                            </div>
-                            <span class="text-gray-600">|</span>
-                            <div class="text-xs text-gray-400 font-mono" id="p2pRoomKeyDisplay">
-                                Key: <span class="text-gray-200 font-bold" id="currentRoomKey">p2p-local</span>
-                            </div>
+                        <div class="bg-[#1f1f23] border border-[#26262c] px-3.5 py-1.5 rounded-lg flex items-center space-x-2">
+                            <i class="fa-solid fa-user text-xs text-twitch-purple"></i>
+                            <span class="text-xs font-bold text-white" id="activeViewersCount">1</span>
+                            <span class="text-[11px] text-gray-400">viewers</span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Channel Description / Tags Tab -->
-                <div class="mt-6 bg-[#18181b] rounded-xl p-5 border border-[#26262c]">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="font-bold text-sm text-white uppercase tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-circle-info text-twitch-purple"></i> About StreamerHost_P2P
-                        </h2>
-                        <div class="text-xs text-gray-400">
-                            Connected via Direct WebRTC DataMesh
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-300 leading-relaxed">
-                        Welcome to our zero-server peer-to-peer stream powered by WebRTC. Stream media and screen share directly from browser-to-browser with minimal latency.
-                    </p>
-                    <div class="flex flex-wrap gap-2 mt-4">
-                        <span class="text-xs bg-[#26262c] text-gray-300 px-2.5 py-1 rounded-full border border-[#32323a]">#WebRTC</span>
-                        <span class="text-xs bg-[#26262c] text-gray-300 px-2.5 py-1 rounded-full border border-[#32323a]">#NoServer</span>
-                        <span class="text-xs bg-[#26262c] text-gray-300 px-2.5 py-1 rounded-full border border-[#32323a]">#ScreenShare</span>
-                        <span class="text-xs bg-[#26262c] text-gray-300 px-2.5 py-1 rounded-full border border-[#32323a]">#P2P</span>
                     </div>
                 </div>
             </div>
         </main>
 
-        <!-- Right Sidebar: Live Chat -->
-        <aside id="chatSidebar" class="w-80 bg-[#18181b] border-l border-[#26262c] flex flex-col shrink-0 z-20">
-            
+        <!-- Right Sidebar: Live Chat Panel -->
+        <aside class="w-72 lg:w-80 bg-[#18181b] border-l border-[#26262c] flex flex-col shrink-0">
             <!-- Chat Header -->
-            <div class="h-12 px-4 border-b border-[#26262c] flex items-center justify-between shrink-0 bg-[#1f1f23]">
-                <button class="text-gray-400 hover:text-white transition">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                </button>
-                <span class="font-bold text-xs uppercase tracking-wider text-gray-200">Stream Chat</span>
-                <button onclick="clearChat()" title="Clear Chat" class="text-gray-400 hover:text-white transition text-xs">
+            <div class="p-3 border-b border-[#26262c] flex items-center justify-between bg-[#18181b]">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-comments text-twitch-purple text-sm"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-200">Stream Chat</span>
+                </div>
+                <button onclick="clearChat()" title="Clear Chat" class="text-gray-500 hover:text-gray-300 text-xs transition">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
 
-            <!-- Chat Messages Display Area -->
-            <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 font-sans text-xs">
-                <!-- Welcome system message -->
-                <div class="bg-twitch-purple/10 border border-twitch-purple/20 p-2.5 rounded-lg text-gray-300">
-                    <div class="font-bold text-twitch-purple mb-0.5 flex items-center gap-1">
-                        <i class="fa-solid fa-shield-halved text-xs"></i> System
-                    </div>
-                    Welcome to the P2P chat room! Messages travel directly between connected peers.
+            <!-- Chat Messages Area -->
+            <div id="chatMessages" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+                <div class="bg-twitch-purple/10 border border-twitch-purple/20 p-2.5 rounded-lg text-gray-300 text-center leading-relaxed">
+                    <span class="text-twitch-purple font-bold block mb-0.5"><i class="fa-solid fa-shield-halved"></i> Welcome to Stream Chat!</span>
+                    Chat with other viewers live on this channel.
                 </div>
             </div>
 
-            <!-- Chat Emote & Reaction Quick Bar -->
-            <div class="px-3 py-1.5 bg-[#18181b] border-t border-[#26262c] flex items-center space-x-1 overflow-x-auto">
-                <button onclick="insertEmote('🔥')" class="hover:bg-[#26262c] p-1 rounded text-sm">🔥</button>
-                <button onclick="insertEmote('🎮')" class="hover:bg-[#26262c] p-1 rounded text-sm">🎮</button>
-                <button onclick="insertEmote('GG')" class="hover:bg-[#26262c] px-1.5 py-0.5 bg-[#26262c] rounded text-[11px] font-bold text-twitch-purple">GG</button>
-                <button onclick="insertEmote('POG')" class="hover:bg-[#26262c] px-1.5 py-0.5 bg-[#26262c] rounded text-[11px] font-bold text-emerald-400">POG</button>
-                <button onclick="insertEmote('LUL')" class="hover:bg-[#26262c] px-1.5 py-0.5 bg-[#26262c] rounded text-[11px] font-bold text-amber-400">LUL</button>
-                <button onclick="insertEmote('🚀')" class="hover:bg-[#26262c] p-1 rounded text-sm">🚀</button>
-            </div>
-
-            <!-- Chat Input Area -->
-            <div class="p-3 border-t border-[#26262c] bg-[#18181b] shrink-0">
-                <form id="chatForm" onsubmit="handleSendChat(event)" class="relative">
-                    <input type="text" id="chatInput" placeholder="Send a message..." class="w-full bg-[#1f1f23] text-xs text-gray-200 placeholder-gray-500 rounded-lg pl-3 pr-10 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
-                    <button type="submit" class="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-twitch-purple hover:bg-twitch-hover text-white rounded-md text-xs transition flex items-center justify-center">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </form>
-                <div class="flex items-center justify-between mt-2 text-[10px] text-gray-500">
-                    <span class="flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> P2P Mesh Active
-                    </span>
-                    <span>Chat slow mode: off</span>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- Modal 1: Go Live / Screen Share Setup -->
+            <!-- Chat Input Box -->
+            <div class="p-3 border-t border-[#26262c] bg-[#18181b]">
+    <!-- Go Live Modal (Channel / Room setup) -->
     <div id="goLiveModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-[#18181b] border border-[#26262c] rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div class="p-5 border-b border-[#26262c] flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-broadcast-tower text-twitch-purple text-lg"></i>
-                    <h3 class="font-bold text-white text-base">Broadcast Studio Setup</h3>
+                <div class="flex items-center space-x-2 text-twitch-purple">
+                    <i class="fa-solid fa-tower-broadcast text-xl"></i>
+                    <h3 class="text-base font-bold text-white">Create Live Room</h3>
                 </div>
                 <button onclick="closeGoLiveModal()" class="text-gray-400 hover:text-white transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-
+            
             <div class="p-6 space-y-4">
-                <!-- Select Media Source -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Select Stream Source</label>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Room / Channel Name</label>
+                    <input type="text" id="setupChannelName" placeholder="e.g. Alex's Gaming Lounge" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple font-medium">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Broadcast Title</label>
+                        <input type="text" id="setupStreamTitle" value="Live Interactive Stream" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Room Category</label>
+                        <select id="setupStreamCategory" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2.5 border border-[#303036] focus:outline-none focus:border-twitch-purple">
+                            <option value="Gaming">Gaming</option>
+                            <option value="Technology">Technology & Coding</option>
+                            <option value="Just Chatting">Just Chatting</option>
+                            <option value="Music">Music & Audio</option>
+                            <option value="Creative">Creative & Art</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Video Source Selection -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">Select Capture Source</label>
                     <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="sourceScreenBtn" onclick="selectSource('screen')" class="p-4 rounded-xl border-2 border-twitch-purple bg-twitch-purple/10 flex flex-col items-center justify-center text-center transition">
-                            <i class="fa-solid fa-desktop text-2xl text-twitch-purple mb-2"></i>
-                            <span class="text-xs font-bold text-white">Screen Share</span>
-                            <span class="text-[10px] text-gray-400 mt-1">Share window, monitor, or app</span>
+                        <button type="button" id="sourceScreenBtn" onclick="selectSource('screen')" class="p-3.5 rounded-xl border-2 border-twitch-purple bg-twitch-purple/10 flex flex-col items-center justify-center text-center transition">
+                            <i class="fa-solid fa-desktop text-2xl text-twitch-purple mb-1.5"></i>
+                            <span class="text-xs font-bold text-white">Entire Screen</span>
                         </button>
-                        <button type="button" id="sourceCamBtn" onclick="selectSource('webcam')" class="p-4 rounded-xl border-2 border-[#2f2f35] bg-[#1f1f23] hover:border-gray-500 flex flex-col items-center justify-center text-center transition">
-                            <i class="fa-solid fa-video text-2xl text-gray-400 mb-2"></i>
+                        <button type="button" id="sourceCamBtn" onclick="selectSource('camera')" class="p-3.5 rounded-xl border-2 border-[#2f2f35] bg-[#1f1f23] hover:border-gray-500 flex flex-col items-center justify-center text-center transition">
+                            <i class="fa-solid fa-video text-2xl text-gray-400 mb-1.5"></i>
                             <span class="text-xs font-bold text-white">Webcam & Mic</span>
-                            <span class="text-[10px] text-gray-400 mt-1">Stream camera feed</span>
                         </button>
                     </div>
                 </div>
-
-                <!-- Broadcast Room Channel Selection -->
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Target Channel Room</label>
-                    <select id="setupChannelRoom" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple font-medium">
-                        <option value="twp2p-main-channel">Main Channel (Default Public Room)</option>
-                        <option value="twp2p-gaming-channel">Gaming Channel</option>
-                        <option value="twp2p-tech-channel">Software & Tech Channel</option>
-                    </select>
-                </div>
-
-                <!-- Stream Title -->
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Stream Title</label>
-                    <input type="text" id="setupStreamTitle" value="Live P2P Screen Share Broadcast" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
-                </div>
-
-                <!-- Category -->
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1">Category</label>
-                    <select id="setupCategory" class="w-full bg-[#1f1f23] text-sm text-gray-200 rounded-lg px-3 py-2 border border-[#303036] focus:outline-none focus:border-twitch-purple">
-                        <option value="Software & Tech">Software & Technology</option>
-                        <option value="Just Chatting">Just Chatting</option>
-                        <option value="Gaming">Gaming</option>
-                        <option value="Creative & Art">Creative & Art</option>
-                    </select>
-                </div>
             </div>
 
-            <div class="p-5 border-t border-[#26262c] bg-[#1f1f23] flex items-center justify-end space-x-3">
+            <div class="p-4 border-t border-[#26262c] bg-[#1f1f23] flex items-center justify-end space-x-3">
                 <button onclick="closeGoLiveModal()" class="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white transition">Cancel</button>
-                <button onclick="confirmStartBroadcast()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 shadow-lg shadow-twitch-purple/20 transition">
+                <button onclick="confirmStartBroadcast()" class="bg-twitch-purple hover:bg-twitch-hover text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center space-x-2 shadow-lg transition">
                     <i class="fa-solid fa-circle-play"></i>
-                    <span>Start Live Stream</span>
+                    <span>Create & Launch Room</span>
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 2: Join Stream Channel Hub -->
-    <div id="joinModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-[#18181b] border border-[#26262c] rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div class="p-5 border-b border-[#26262c] flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-play text-emerald-400 text-lg"></i>
-                    <h3 class="font-bold text-white text-base">Select Channel to Join</h3>
-                </div>
-                <button onclick="closeJoinModal()" class="text-gray-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div class="p-6 space-y-3">
-                <p class="text-xs text-gray-400 mb-2">
-                    Select a channel to immediately tune into the live broadcast:
-                </p>
-
-                <button onclick="joinChannel('twp2p-main-channel')" class="w-full p-3 bg-[#1f1f23] hover:bg-emerald-950/40 border border-[#303036] hover:border-emerald-500 rounded-xl flex items-center justify-between transition text-left group">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-signal"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-sm text-white group-hover:text-emerald-400 transition">Main Channel</div>
-                            <div class="text-[11px] text-gray-400">Default Public Broadcast</div>
-                        </div>
-                    </div>
-                    <span class="text-xs bg-emerald-500/20 text-emerald-400 font-semibold px-2.5 py-1 rounded">Join</span>
-                </button>
-
-                <button onclick="joinChannel('twp2p-gaming-channel')" class="w-full p-3 bg-[#1f1f23] hover:bg-indigo-950/40 border border-[#303036] hover:border-indigo-500 rounded-xl flex items-center justify-between transition text-left group">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-gamepad"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-sm text-white group-hover:text-indigo-400 transition">Gaming Channel</div>
-                            <div class="text-[11px] text-gray-400">Game Streams & Esports</div>
-                        </div>
-                    </div>
-                    <span class="text-xs bg-indigo-500/20 text-indigo-400 font-semibold px-2.5 py-1 rounded">Join</span>
-                </button>
-            </div>
-
-            <div class="p-4 border-t border-[#26262c] bg-[#1f1f23] flex items-center justify-end">
-                <button onclick="closeJoinModal()" class="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-white transition">Close</button>
             </div>
         </div>
     </div>
@@ -497,80 +394,290 @@
     <!-- Notification Toast Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
 
+    <!-- Firebase ESM Scripts & Main Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            sendEmailVerification, 
+            updateProfile, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import {
+            getDatabase,
+            ref,
+            set,
+            remove,
+            onValue,
+            onDisconnect
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyA5P_AzDieM3ESRDHUKEG_2ynXyzO4k56s",
+            authDomain: "maps-97c76.firebaseapp.com",
+            databaseURL: "https://maps-97c76-default-rtdb.firebaseio.com",
+            projectId: "maps-97c76",
+            storageBucket: "maps-97c76.firebasestorage.app",
+            messagingSenderId: "676250653624",
+            appId: "1:676250653624:web:b58e00a1627cfa167c754d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        window.db = db;
+        window.dbRef = ref;
+        window.dbSet = set;
+        window.dbRemove = remove;
+        window.dbOnDisconnect = onDisconnect;
+
+        let currentUser = null;
+
+        // Listen for live active rooms in Realtime Database created by streamers
+        onValue(ref(db, 'rooms'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                window.activeDirectoryChannels = Object.values(data);
+            } else {
+                window.activeDirectoryChannels = [];
+            }
+            if (window.renderChannelsList) {
+                window.renderChannelsList();
+            }
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            window.currentUser = user;
+            const authOverlay = document.getElementById('authOverlay');
+            const headerSignInBtn = document.getElementById('headerSignInBtn');
+            const userProfileHeader = document.getElementById('userProfileHeader');
+
+            if (!user) {
+                if (headerSignInBtn) headerSignInBtn.classList.remove('hidden');
+                if (userProfileHeader) userProfileHeader.classList.add('hidden');
+            } else {
+                if (!user.emailVerified) {
+                    if (headerSignInBtn) headerSignInBtn.classList.remove('hidden');
+                    if (userProfileHeader) userProfileHeader.classList.add('hidden');
+                    
+                    if (authOverlay && !authOverlay.classList.contains('hidden')) {
+                        document.getElementById('authTabs').classList.add('hidden');
+                        document.getElementById('signInForm').classList.add('hidden');
+                        document.getElementById('signUpForm').classList.add('hidden');
+                        document.getElementById('verifyPendingScreen').classList.remove('hidden');
+                        document.getElementById('verifyEmailTarget').innerText = user.email;
+                    }
+                } else {
+                    if (authOverlay) authOverlay.classList.add('hidden');
+                    if (headerSignInBtn) headerSignInBtn.classList.add('hidden');
+                    if (userProfileHeader) userProfileHeader.classList.remove('hidden');
+                    
+                    updateHeaderUserProfile(user);
+                }
+            }
+        });
+
+        window.openAuthModal = function(tab = 'signin') {
+            const authOverlay = document.getElementById('authOverlay');
+            authOverlay.classList.remove('hidden');
+            
+            if (currentUser && !currentUser.emailVerified) {
+                document.getElementById('authTabs').classList.add('hidden');
+                document.getElementById('signInForm').classList.add('hidden');
+                document.getElementById('signUpForm').classList.add('hidden');
+                document.getElementById('verifyPendingScreen').classList.remove('hidden');
+                document.getElementById('verifyEmailTarget').innerText = currentUser.email;
+            } else {
+                document.getElementById('authTabs').classList.remove('hidden');
+                document.getElementById('verifyPendingScreen').classList.add('hidden');
+                switchAuthTab(tab);
+            }
+        };
+
+        window.closeAuthOverlay = function() {
+            document.getElementById('authOverlay').classList.add('hidden');
+        };
+
+        window.handleSignIn = async function(e) {
+            e.preventDefault();
+            hideAuthError();
+            const email = document.getElementById('signInEmail').value.trim();
+            const password = document.getElementById('signInPassword').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast('Signed in successfully!', 'success');
+            } catch (err) {
+                showAuthError(err.message.replace('Firebase: ', ''));
+            }
+        };
+
+        window.handleSignUp = async function(e) {
+            e.preventDefault();
+            hideAuthError();
+            const username = document.getElementById('signUpUsername').value.trim();
+            const email = document.getElementById('signUpEmail').value.trim();
+            const password = document.getElementById('signUpPassword').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: username });
+                await sendEmailVerification(userCredential.user);
+                showToast('Verification email sent! Check your inbox.', 'info');
+            } catch (err) {
+                showAuthError(err.message.replace('Firebase: ', ''));
+            }
+        };
+
+        window.checkEmailVerified = async function() {
+            if (!auth.currentUser) return;
+            try {
+                await auth.currentUser.reload();
+                if (auth.currentUser.emailVerified) {
+                    showToast('Email verified successfully!', 'success');
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    updateHeaderUserProfile(auth.currentUser);
+                } else {
+                    showAuthError('Email not verified yet. Please check your inbox.');
+                }
+            } catch (err) {
+                showAuthError(err.message);
+            }
+        };
+
+        window.resendVerificationEmail = async function() {
+            if (!auth.currentUser) return;
+            try {
+                await sendEmailVerification(auth.currentUser);
+                showToast('Verification email resent!', 'info');
+            } catch (err) {
+                showAuthError(err.message);
+            }
+        };
+
+        window.handleSignOut = async function() {
+            try {
+                await signOut(auth);
+                showToast('Signed out', 'info');
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        window.switchAuthTab = function(tab) {
+            hideAuthError();
+            const signInForm = document.getElementById('signInForm');
+            const signUpForm = document.getElementById('signUpForm');
+            const tabSignIn = document.getElementById('tabSignIn');
+            const tabSignUp = document.getElementById('tabSignUp');
+
+            if (tab === 'signin') {
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                tabSignIn.className = "flex-1 py-3 text-xs font-bold text-twitch-purple border-b-2 border-twitch-purple transition";
+                tabSignUp.className = "flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition";
+            } else {
+                signUpForm.classList.remove('hidden');
+                signInForm.classList.add('hidden');
+                tabSignUp.className = "flex-1 py-3 text-xs font-bold text-twitch-purple border-b-2 border-twitch-purple transition";
+                tabSignIn.className = "flex-1 py-3 text-xs font-bold text-gray-400 hover:text-white transition";
+            }
+        };
+
+        function showAuthError(msg) {
+            const errBox = document.getElementById('authErrorMsg');
+            errBox.innerText = msg;
+            errBox.classList.remove('hidden');
+        }
+
+        function hideAuthError() {
+            document.getElementById('authErrorMsg').classList.add('hidden');
+        }
+
+        function updateHeaderUserProfile(user) {
+            const name = user.displayName || user.email.split('@')[0];
+            document.getElementById('userHeaderName').innerText = name;
+            document.getElementById('userHeaderAvatar').innerText = name.charAt(0).toUpperCase();
+            document.getElementById('channelAvatarInitial').innerText = name.charAt(0).toUpperCase();
+            window.myUsername = name;
+
+            const setupInput = document.getElementById('setupChannelName');
+            if (setupInput && !setupInput.value) {
+                setupInput.value = name + "'s Room";
+            }
+        }
+    </script>
+
     <script>
-        // Global State Variables
+        // Global dynamic live channels created by streamers
+        window.activeDirectoryChannels = [];
+
         let peer = null;
         let localStream = null;
-        let currentCall = null;
-        let connectedDataConnections = []; // Data channels for broadcast chat
-        let hostDataConnection = null; // Data channel for viewer -> host
+        let connectedDataConnections = [];
+        let hostDataConnection = null;
+        let currentChannelName = "";
+        let currentRoomDbRef = null;
         
         let isBroadcaster = false;
-        let selectedSourceType = 'screen'; // 'screen' or 'webcam'
-        let myPeerId = '';
-        let targetHostPeerId = '';
-        let isFollowing = false;
+        let selectedSourceType = 'screen';
         let streamStartTime = null;
         let streamTimerInterval = null;
 
-        // User profile info
-        const myUsername = 'User_' + Math.floor(1000 + Math.random() * 9000);
+        window.myUsername = 'Viewer_' + Math.floor(100 + Math.random() * 900);
         const userColors = ['#9146FF', '#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#8B5CF6'];
         const myColor = userColors[Math.floor(Math.random() * userColors.length)];
 
-        // Elements
         const videoElem = document.getElementById('mainStreamVideo');
         const videoPlaceholder = document.getElementById('videoPlaceholder');
 
-        // Initialize PeerJS Client
-        function initPeerJS(customId = null) {
-            return new Promise((resolve, reject) => {
+        function channelNameToP2PKey(channelName) {
+            return 'sp-channel-' + channelName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
+        }
+
+        function initPeerJS(customChannelName = null) {
+            return new Promise((resolve) => {
                 if (peer) {
                     try { peer.destroy(); } catch(e){}
                 }
 
-                const uniqueId = customId || 'twp2p-' + Math.random().toString(36).substring(2, 8);
-                showToast('Initializing P2P Node...', 'info');
+                const peerKey = customChannelName ? channelNameToP2PKey(customChannelName) : 'sp-viewer-' + Math.random().toString(36).substring(2, 8);
+                showToast('Connecting to Channel Network...', 'info');
                 
-                peer = new Peer(uniqueId, { debug: 1 });
+                peer = new Peer(peerKey, { debug: 1 });
 
                 peer.on('open', (id) => {
-                    myPeerId = id;
-                    console.log('PeerJS Node Online with ID:', id);
-                    
-                    // Check URL search param for auto-join link ?stream=ChannelKey
                     const urlParams = new URLSearchParams(window.location.search);
-                    const streamParam = urlParams.get('stream');
-                    if (streamParam && streamParam !== id) {
-                        joinChannel(streamParam);
+                    const channelParam = urlParams.get('channel');
+                    if (channelParam && !customChannelName) {
+                        joinChannel(channelParam);
                     }
-
                     resolve(id);
                 });
 
                 peer.on('error', (err) => {
-                    console.error('PeerJS Error:', err);
-                    showToast('P2P Status: ' + (err.type === 'unavailable-id' ? 'Channel occupied or host active' : err.type), 'info');
+                    if (err.type === 'unavailable-id') {
+                        showToast('Room name is currently active by another streamer.', 'error');
+                    }
                     resolve(null);
                 });
 
-                // Listen for incoming media calls (Host perspective)
                 peer.on('call', (call) => {
-                    console.log('Incoming viewer call from:', call.peer);
                     if (isBroadcaster && localStream) {
                         call.answer(localStream);
-                        showToast('Viewer connected to stream!', 'success');
+                        showToast('A new viewer tuned into your room!', 'success');
                     } else {
                         call.answer();
                     }
                 });
 
-                // Listen for incoming data channel connections (Host perspective)
                 peer.on('connection', (conn) => {
-                    console.log('Data channel connected from:', conn.peer);
                     connectedDataConnections.push(conn);
-
-                    // Broadcast real updated viewer count & peer list to everyone
                     broadcastMeshState();
 
                     conn.on('data', (data) => {
@@ -580,25 +687,20 @@
                     conn.on('close', () => {
                         connectedDataConnections = connectedDataConnections.filter(c => c.peer !== conn.peer);
                         broadcastMeshState();
-                        showToast('A viewer disconnected', 'info');
                     });
                 });
             });
         }
 
-        /* STREAM BROADCAST & CONNECTION FUNCTIONS */
-
-        // Start broadcasting real user screen/camera
         async function confirmStartBroadcast() {
             closeGoLiveModal();
             stopCurrentStream();
 
-            const targetChannel = document.getElementById('setupChannelRoom').value || 'twp2p-main-channel';
+            const channelName = (document.getElementById('setupChannelName').value || window.myUsername + "'s Room").trim();
             const title = document.getElementById('setupStreamTitle').value || 'P2P Live Broadcast';
-            const category = document.getElementById('setupCategory').value;
+            const category = document.getElementById('setupStreamCategory').value || 'Gaming';
 
-            // Initialize host as the primary node for selected channel
-            await initPeerJS(targetChannel);
+            await initPeerJS(channelName);
 
             try {
                 if (selectedSourceType === 'screen') {
@@ -614,76 +716,81 @@
                 }
 
                 localStream.getVideoTracks()[0].onended = () => {
-                    showToast('Screen sharing stopped.', 'info');
+                    showToast('Stream video stopped.', 'info');
                     stopCurrentStream();
                 };
 
                 isBroadcaster = true;
+                currentChannelName = channelName;
+
                 videoElem.srcObject = localStream;
                 videoElem.classList.remove('hidden');
                 videoPlaceholder.classList.add('hidden');
 
-                // UI updates
-                const channelLabel = targetChannel === 'twp2p-main-channel' ? 'Main Channel' : (targetChannel === 'twp2p-gaming-channel' ? 'Gaming Channel' : 'Tech Channel');
+                document.getElementById('channelNameDisplay').innerText = channelName;
                 document.getElementById('streamTitleDisplay').innerText = title;
-                document.getElementById('broadcasterName').innerText = `${myUsername} (Host)`;
-                document.getElementById('streamCategoryBadge').innerText = category;
-                document.getElementById('currentRoomKey').innerText = channelLabel;
-                document.getElementById('sidebarChannelName').innerText = channelLabel;
-                document.getElementById('sidebarCategory').innerText = category;
-                document.getElementById('p2pLiveBadge').className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1f1f23]";
+                document.getElementById('broadcasterName').innerText = `${window.myUsername} (Host)`;
+                document.getElementById('sidebarChannelName').innerText = channelName;
+                document.getElementById('channelAvatarInitial').innerText = channelName.charAt(0).toUpperCase();
+                document.getElementById('activeChannelCard').classList.remove('hidden');
 
-                updateRealViewerUI(1, [myUsername + ' (Host)']);
+                // Publish Room to Firebase Realtime Database
+                const roomKey = channelNameToP2PKey(channelName);
+                if (window.db && window.dbRef && window.dbSet) {
+                    currentRoomDbRef = window.dbRef(window.db, 'rooms/' + roomKey);
+                    await window.dbSet(currentRoomDbRef, {
+                        key: roomKey,
+                        name: channelName,
+                        title: title,
+                        category: category,
+                        host: window.myUsername,
+                        viewers: 1,
+                        createdAt: Date.now()
+                    });
+                    if (window.dbOnDisconnect) {
+                        window.dbOnDisconnect(currentRoomDbRef).remove();
+                    }
+                }
+
+                updateRealViewerUI(1);
                 startStreamTimer();
-                showToast(`Stream live on ${channelLabel}!`, 'success');
+                showToast(`Room "${channelName}" launched & published live!`, 'success');
 
             } catch (err) {
-                console.error("Error starting stream media:", err);
-                showToast('Failed to acquire screen or camera permission.', 'error');
+                showToast('Camera/Screen permission was denied.', 'error');
             }
         }
 
-        // Direct 1-Click Join Channel Function
-        async function joinChannel(channelKey = 'twp2p-main-channel') {
-            closeJoinModal();
+        async function joinChannel(channelName) {
             stopCurrentStream();
+
+            const cleanName = channelName.trim();
+            if (!cleanName) return;
 
             if (!peer) {
                 await initPeerJS();
             }
 
-            targetHostPeerId = channelKey;
-            const channelLabel = channelKey === 'twp2p-main-channel' ? 'Main Channel' : (channelKey === 'twp2p-gaming-channel' ? 'Gaming Channel' : channelKey);
-            showToast(`Connecting to ${channelLabel}...`, 'info');
+            const p2pKey = channelNameToP2PKey(cleanName);
+            showToast(`Tuning into room "${cleanName}"...`, 'info');
 
-            // Call host for real video stream
-            const call = peer.call(channelKey, new MediaStream());
-            currentCall = call;
+            const call = peer.call(p2pKey, new MediaStream());
 
             call.on('stream', (remoteStream) => {
-                console.log('Received remote media stream!');
                 videoElem.srcObject = remoteStream;
                 videoElem.classList.remove('hidden');
                 videoPlaceholder.classList.add('hidden');
-                document.getElementById('p2pLiveBadge').className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1f1f23]";
-                showToast(`Connected to ${channelLabel}!`, 'success');
+                showToast(`Connected to channel "${cleanName}"!`, 'success');
                 startStreamTimer();
             });
 
-            call.on('close', () => {
-                showToast('Stream ended.', 'info');
-                stopCurrentStream();
-            });
-
-            // Connect Data Channel for Live Chat & State Sync
-            hostDataConnection = peer.connect(channelKey, { metadata: { username: myUsername } });
+            hostDataConnection = peer.connect(p2pKey, { metadata: { username: window.myUsername } });
             
             hostDataConnection.on('open', () => {
-                console.log('Connected to Host Data Channel');
-                showToast('Joined live chat.', 'success');
+                showToast('Joined channel chat.', 'success');
                 hostDataConnection.send({
                     type: 'system_join',
-                    username: myUsername
+                    username: window.myUsername
                 });
             });
 
@@ -692,26 +799,109 @@
             });
 
             isBroadcaster = false;
-            document.getElementById('currentRoomKey').innerText = channelLabel;
-            document.getElementById('broadcasterName').innerText = channelLabel;
-            document.getElementById('streamTitleDisplay').innerText = `Live Broadcast - ${channelLabel}`;
-            document.getElementById('sidebarChannelName').innerText = channelLabel;
+            currentChannelName = cleanName;
+
+            document.getElementById('channelNameDisplay').innerText = cleanName;
+            document.getElementById('broadcasterName').innerText = cleanName;
+            document.getElementById('streamTitleDisplay').innerText = `Live Stream on ${cleanName}`;
+            document.getElementById('sidebarChannelName').innerText = cleanName;
+            document.getElementById('channelAvatarInitial').innerText = cleanName.charAt(0).toUpperCase();
+            document.getElementById('activeChannelCard').classList.remove('hidden');
+            
+            renderChannelsList();
         }
 
-        // Broadcast mesh state (Real viewer counts & real peer list)
+        function handleQuickJoin(event) {
+            event.preventDefault();
+            const input = document.getElementById('customRoomInput');
+            const channelName = input.value.trim();
+            if (channelName) {
+                joinChannel(channelName);
+            } else {
+                showToast('Please enter a Channel Name.', 'error');
+            }
+        }
+
+        function promptAndJoinChannel() {
+            const channelName = prompt('Enter Channel / Room Name to tune in:');
+            if (channelName) joinChannel(channelName);
+        }
+
+        window.renderChannelsList = function() {
+            const container = document.getElementById('liveChannelsContainer');
+            const channels = window.activeDirectoryChannels || [];
+
+            if (channels.length === 0) {
+                container.innerHTML = `
+                    <div class="p-3 text-center rounded-xl bg-[#18181b] border border-[#26262c]">
+                        <p class="text-xs text-gray-400 font-medium">No live rooms right now</p>
+                        <p class="text-[10px] text-gray-500 mt-1 mb-2">Be the first streamer to go live!</p>
+                        <button onclick="openGoLiveModal()" class="w-full bg-twitch-purple hover:bg-twitch-hover text-white text-[11px] font-bold py-1.5 rounded transition">
+                            + Create Room
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = channels.map(ch => {
+                const isActive = currentChannelName.toLowerCase() === ch.name.toLowerCase();
+                return `
+                    <button onclick="joinChannel('${escapeHTML(ch.name)}')" class="w-full text-left p-2 rounded-lg flex items-center space-x-3 transition ${isActive ? 'bg-twitch-purple/20 border border-twitch-purple/50' : 'hover:bg-[#26262c]'}">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">
+                            ${ch.name.charAt(0)}
+                        </div>
+                        <div class="hidden lg:block min-w-0 flex-1">
+                            <div class="text-xs font-bold text-white truncate">${escapeHTML(ch.name)}</div>
+                            <div class="text-[10px] text-gray-400 truncate">${escapeHTML(ch.category || 'Live')} • ${ch.viewers || 1} watching</div>
+                        </div>
+                        <div class="hidden lg:flex items-center space-x-1 shrink-0">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        };
+
+        function filterChannelsList() {
+            const query = document.getElementById('globalChannelSearch').value.toLowerCase();
+            const channels = window.activeDirectoryChannels || [];
+            const filtered = channels.filter(c => c.name.toLowerCase().includes(query) || (c.title && c.title.toLowerCase().includes(query)));
+            
+            const container = document.getElementById('liveChannelsContainer');
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-xs text-gray-500 p-2 text-center">No matching streamer rooms found</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(ch => `
+                <button onclick="joinChannel('${escapeHTML(ch.name)}')" class="w-full text-left p-2 rounded-lg flex items-center space-x-3 hover:bg-[#26262c] transition">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-xs text-white uppercase shrink-0">
+                        ${ch.name.charAt(0)}
+                    </div>
+                    <div class="hidden lg:block min-w-0 flex-1">
+                        <div class="text-xs font-bold text-white truncate">${escapeHTML(ch.name)}</div>
+                        <div class="text-[10px] text-gray-400 truncate">${escapeHTML(ch.category || 'Live')}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
         function broadcastMeshState() {
             if (!isBroadcaster) return;
+            const totalViewers = connectedDataConnections.length + 1;
 
-            const connectedUsernames = connectedDataConnections.map(c => c.metadata?.username || c.peer);
-            const totalViewers = connectedDataConnections.length + 1; // +1 for host
-            const allPeers = [myUsername + ' (Host)', ...connectedUsernames];
+            updateRealViewerUI(totalViewers);
 
-            updateRealViewerUI(totalViewers, allPeers);
+            // Sync viewer count to Realtime DB room entry
+            if (currentRoomDbRef && window.dbSet) {
+                const roomKey = channelNameToP2PKey(currentChannelName);
+                window.dbSet(window.dbRef(window.db, `rooms/${roomKey}/viewers`), totalViewers);
+            }
 
             const statePayload = {
                 type: 'mesh_state',
-                totalViewers: totalViewers,
-                peers: allPeers
+                totalViewers: totalViewers
             };
 
             connectedDataConnections.forEach(conn => {
@@ -722,52 +912,35 @@
         function handleIncomingP2PData(data) {
             if (data.type === 'chat') {
                 renderChatMessage(data);
-
                 if (isBroadcaster) {
                     connectedDataConnections.forEach(conn => {
-                        if (conn.open && conn.peer !== data.senderPeerId) {
-                            conn.send(data);
-                        }
+                        if (conn.open && conn.peer !== data.senderPeerId) conn.send(data);
                     });
                 }
             } else if (data.type === 'system_join') {
-                renderSystemMessage(`${data.username} joined the stream`);
+                renderSystemMessage(`${data.username} joined channel chat`);
                 broadcastMeshState();
             } else if (data.type === 'mesh_state') {
-                updateRealViewerUI(data.totalViewers, data.peers);
+                updateRealViewerUI(data.totalViewers);
             }
         }
 
-        function updateRealViewerUI(count, peersList = []) {
+        function updateRealViewerUI(count) {
             document.getElementById('activeViewersCount').innerText = count;
-            document.getElementById('sidebarViewerCount').innerText = count + ' viewers';
-
-            const listElem = document.getElementById('peerList');
-            if (peersList.length === 0) {
-                listElem.innerHTML = `<div class="text-[11px] italic text-gray-500">No other peers connected</div>`;
-            } else {
-                listElem.innerHTML = peersList.map(p => `
-                    <div class="flex items-center space-x-1.5 text-[11px] text-gray-300">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        <span class="truncate">${escapeHTML(p)}</span>
-                    </div>
-                `).join('');
-            }
+            document.getElementById('sidebarViewerCount').innerText = count;
         }
 
         function renderChatMessage(data) {
             const container = document.getElementById('chatMessages');
             const msgDiv = document.createElement('div');
             msgDiv.className = "flex items-start space-x-2 text-xs leading-relaxed hover:bg-[#26262c]/40 p-1 rounded transition";
-
             msgDiv.innerHTML = `
                 <div class="flex-1">
-                    <span class="font-bold cursor-pointer hover:underline" style="color: ${data.color}">${data.username}:</span>
+                    <span class="font-bold cursor-pointer hover:underline" style="color: ${data.color}">${escapeHTML(data.username)}:</span>
                     <span class="text-gray-200 ml-1 break-words">${escapeHTML(data.text)}</span>
                 </div>
                 <span class="text-[10px] text-gray-500 font-mono">${data.timestamp}</span>
             `;
-
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
         }
@@ -790,14 +963,17 @@
                 clearInterval(streamTimerInterval);
                 streamTimerInterval = null;
             }
+            if (currentRoomDbRef && window.dbRemove) {
+                window.dbRemove(currentRoomDbRef);
+                currentRoomDbRef = null;
+            }
             isBroadcaster = false;
-            document.getElementById('p2pLiveBadge').className = "absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-gray-500 rounded-full border-2 border-[#1f1f23]";
-            updateRealViewerUI(0, []);
+            updateRealViewerUI(1);
         }
 
         function copyShareLink() {
-            const shareKey = targetHostPeerId || 'twp2p-main-channel';
-            const fullUrl = window.location.origin + window.location.pathname + '?stream=' + shareKey;
+            const channel = currentChannelName || "Live Room";
+            const fullUrl = window.location.origin + window.location.pathname + '?channel=' + encodeURIComponent(channel);
             
             const dummy = document.createElement("input");
             document.body.appendChild(dummy);
@@ -806,39 +982,33 @@
             document.execCommand("copy");
             document.body.removeChild(dummy);
 
-            showToast(`Direct stream channel link copied!`, 'info');
+            showToast(`Direct link to channel "${channel}" copied!`, 'info');
         }
 
-        /* UTILITY & UI EVENT HANDLERS */
         function selectSource(type) {
             selectedSourceType = type;
             const screenBtn = document.getElementById('sourceScreenBtn');
             const camBtn = document.getElementById('sourceCamBtn');
 
             if (type === 'screen') {
-                screenBtn.className = "p-4 rounded-xl border-2 border-twitch-purple bg-twitch-purple/10 flex flex-col items-center justify-center text-center transition";
-                camBtn.className = "p-4 rounded-xl border-2 border-[#2f2f35] bg-[#1f1f23] hover:border-gray-500 flex flex-col items-center justify-center text-center transition";
+                screenBtn.className = "p-3.5 rounded-xl border-2 border-twitch-purple bg-twitch-purple/10 flex flex-col items-center justify-center text-center transition";
+                camBtn.className = "p-3.5 rounded-xl border-2 border-[#2f2f35] bg-[#1f1f23] hover:border-gray-500 flex flex-col items-center justify-center text-center transition";
             } else {
-                camBtn.className = "p-4 rounded-xl border-2 border-twitch-purple bg-twitch-purple/10 flex flex-col items-center justify-center text-center transition";
-                screenBtn.className = "p-4 rounded-xl border-2 border-[#2f2f35] bg-[#1f1f23] hover:border-gray-500 flex flex-col items-center justify-center text-center transition";
+                camBtn.className = "p-3.5 rounded-xl border-2 border-twitch-purple bg-twitch-purple/10 flex flex-col items-center justify-center text-center transition";
+                screenBtn.className = "p-3.5 rounded-xl border-2 border-[#2f2f35] bg-[#1f1f23] hover:border-gray-500 flex flex-col items-center justify-center text-center transition";
             }
         }
 
-        function openGoLiveModal() {
-            document.getElementById('goLiveModal').classList.remove('hidden');
+        function openGoLiveModal() { 
+            if (!window.currentUser || !window.currentUser.emailVerified) {
+                showToast('Please sign in and verify your account to create a room!', 'info');
+                if (window.openAuthModal) window.openAuthModal('signin');
+                return;
+            }
+            document.getElementById('goLiveModal').classList.remove('hidden'); 
         }
-
-        function closeGoLiveModal() {
-            document.getElementById('goLiveModal').classList.add('hidden');
-        }
-
-        function openJoinModal() {
-            document.getElementById('joinModal').classList.remove('hidden');
-        }
-
-        function closeJoinModal() {
-            document.getElementById('joinModal').classList.add('hidden');
-        }
+        
+        function closeGoLiveModal() { document.getElementById('goLiveModal').classList.add('hidden'); }
 
         function handleSendChat(event) {
             event.preventDefault();
@@ -848,7 +1018,7 @@
 
             const chatPayload = {
                 type: 'chat',
-                username: myUsername,
+                username: window.myUsername,
                 color: myColor,
                 text: msg,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -857,20 +1027,12 @@
             renderChatMessage(chatPayload);
 
             if (isBroadcaster) {
-                connectedDataConnections.forEach(conn => {
-                    if (conn.open) conn.send(chatPayload);
-                });
+                connectedDataConnections.forEach(conn => { if (conn.open) conn.send(chatPayload); });
             } else if (hostDataConnection && hostDataConnection.open) {
                 hostDataConnection.send(chatPayload);
             }
 
             input.value = '';
-        }
-
-        function insertEmote(emote) {
-            const input = document.getElementById('chatInput');
-            input.value += (input.value ? ' ' : '') + emote;
-            input.focus();
         }
 
         function clearChat() {
@@ -884,7 +1046,6 @@
         function startStreamTimer() {
             streamStartTime = Date.now();
             if (streamTimerInterval) clearInterval(streamTimerInterval);
-
             streamTimerInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - streamStartTime) / 1000);
                 const hrs = String(Math.floor(elapsed / 3600)).padStart(2, '0');
@@ -895,75 +1056,20 @@
         }
 
         function togglePlayPause() {
-            if (videoElem.paused) {
-                videoElem.play();
-                document.getElementById('playPauseBtn').innerHTML = `<i class="fa-solid fa-pause text-lg"></i>`;
-            } else {
-                videoElem.pause();
-                document.getElementById('playPauseBtn').innerHTML = `<i class="fa-solid fa-play text-lg"></i>`;
-            }
+            if (videoElem.paused) videoElem.play();
+            else videoElem.pause();
         }
 
-        function toggleMute() {
-            videoElem.muted = !videoElem.muted;
-            const icon = document.getElementById('muteIcon');
-            if (videoElem.muted) {
-                icon.className = "fa-solid fa-volume-xmark text-lg text-red-400";
-            } else {
-                icon.className = "fa-solid fa-volume-high text-lg";
-            }
-        }
-
-        function changeVolume(val) {
-            videoElem.volume = val;
-            videoElem.muted = (val == 0);
-            const icon = document.getElementById('muteIcon');
-            if (val == 0) {
-                icon.className = "fa-solid fa-volume-xmark text-lg text-red-400";
-            } else {
-                icon.className = "fa-solid fa-volume-high text-lg";
-            }
-        }
-
-        function togglePip() {
-            if (document.pictureInPictureElement) {
-                document.exitPictureInPicture();
-            } else if (videoElem.requestPictureInPicture) {
-                videoElem.requestPictureInPicture();
-            }
-        }
-
+        function toggleMute() { videoElem.muted = !videoElem.muted; }
+        function changeVolume(val) { videoElem.volume = val; }
         function toggleFullscreen() {
-            const container = videoElem.parentElement;
-            if (!document.fullscreenElement) {
-                container.requestFullscreen().catch(err => console.error(err));
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        function toggleFollow() {
-            isFollowing = !isFollowing;
-            const followBtn = document.getElementById('followBtn');
-            const followText = document.getElementById('followText');
-            const followIcon = document.getElementById('followIcon');
-
-            if (isFollowing) {
-                followBtn.className = "bg-[#26262c] hover:bg-[#323239] text-gray-200 text-sm font-semibold px-4 py-2 rounded-md flex items-center space-x-2 transition border border-[#3a3a42]";
-                followText.innerText = "Following";
-                followIcon.className = "fa-solid fa-heart text-twitch-purple";
-                showToast('Channel added to Following!', 'success');
-            } else {
-                followBtn.className = "bg-twitch-purple hover:bg-twitch-hover text-white text-sm font-semibold px-4 py-2 rounded-md flex items-center space-x-2 transition shadow-md";
-                followText.innerText = "Follow";
-                followIcon.className = "fa-regular fa-heart";
-            }
+            if (!document.fullscreenElement) videoElem.parentElement.requestFullscreen();
+            else document.exitFullscreen();
         }
 
         function showToast(message, type = 'info') {
             const toastContainer = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            
             let bg = 'bg-[#1f1f23] border-twitch-purple text-white';
             let icon = 'fa-circle-info text-twitch-purple';
             if (type === 'success') {
@@ -975,13 +1081,8 @@
             }
 
             toast.className = `p-3 rounded-xl border ${bg} shadow-2xl flex items-center space-x-3 text-xs transition-all duration-300 transform translate-y-2 pointer-events-auto`;
-            toast.innerHTML = `
-                <i class="fa-solid ${icon} text-base"></i>
-                <span class="font-medium">${escapeHTML(message)}</span>
-            `;
-
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i><span class="font-medium">${escapeHTML(message)}</span>`;
             toastContainer.appendChild(toast);
-
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-4');
                 setTimeout(() => toast.remove(), 300);
@@ -989,13 +1090,12 @@
         }
 
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
 
         window.onload = function() {
-            initPeerJS().catch(err => console.log('Peer init ready on demand'));
+            if (window.renderChannelsList) window.renderChannelsList();
+            initPeerJS().catch(() => {});
         }
     </script>
 </body>
