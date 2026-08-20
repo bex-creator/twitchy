@@ -178,6 +178,7 @@
                     </div>
                     <div class="hidden md:block text-left">
                         <div id="userHeaderName" class="text-xs font-bold text-white truncate max-w-[100px]">User</div>
+                        <div id="userVerificationBadge" class="text-[9px] text-amber-400 font-medium hidden">Unverified</div>
                     </div>
                     <button onclick="handleSignOut()" title="Sign Out" class="text-gray-400 hover:text-red-400 ml-1 p-1 transition text-xs">
                         <i class="fa-solid fa-right-from-bracket"></i>
@@ -415,14 +416,16 @@
             onDisconnect
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        // Enforcing your exact Firebase config directly 
+        const firebaseConfig = {
             apiKey: "AIzaSyA5P_AzDieM3ESRDHUKEG_2ynXyzO4k56s",
             authDomain: "maps-97c76.firebaseapp.com",
             databaseURL: "https://maps-97c76-default-rtdb.firebaseio.com",
             projectId: "maps-97c76",
             storageBucket: "maps-97c76.firebasestorage.app",
             messagingSenderId: "676250653624",
-            appId: "1:676250653624:web:b58e00a1627cfa167c754d"
+            appId: "1:676250653624:web:b58e00a1627cfa167c754d",
+            measurementId: "G-C6CTDXD6SZ"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -461,23 +464,36 @@
                 if (headerSignInBtn) headerSignInBtn.classList.remove('hidden');
                 if (userProfileHeader) userProfileHeader.classList.add('hidden');
             } else {
-                if (!user.emailVerified) {
-                    if (headerSignInBtn) headerSignInBtn.classList.remove('hidden');
-                    if (userProfileHeader) userProfileHeader.classList.add('hidden');
-                    
-                    if (authOverlay && !authOverlay.classList.contains('hidden')) {
-                        document.getElementById('authTabs').classList.add('hidden');
-                        document.getElementById('signInForm').classList.add('hidden');
-                        document.getElementById('signUpForm').classList.add('hidden');
-                        document.getElementById('verifyPendingScreen').classList.remove('hidden');
-                        document.getElementById('verifyEmailTarget').innerText = user.email;
+                if (headerSignInBtn) headerSignInBtn.classList.add('hidden');
+                if (userProfileHeader) userProfileHeader.classList.remove('hidden');
+                
+                updateHeaderUserProfile(user);
+
+                // Only auto-close overlay if email is verified
+                if (user.emailVerified && authOverlay) {
+                    authOverlay.classList.add('hidden');
+                }
+            }
+        });
+
+        // Automatically detect verification when returning to this browser tab
+        window.addEventListener('focus', async () => {
+            if (auth.currentUser) {
+                try {
+                    await auth.currentUser.reload();
+                    currentUser = auth.currentUser;
+                    window.currentUser = auth.currentUser;
+                    updateHeaderUserProfile(auth.currentUser);
+
+                    if (auth.currentUser.emailVerified) {
+                        const verifyPendingScreen = document.getElementById('verifyPendingScreen');
+                        if (verifyPendingScreen && !verifyPendingScreen.classList.contains('hidden')) {
+                            document.getElementById('authOverlay').classList.add('hidden');
+                            showToast('Email verified successfully! Welcome back.', 'success');
+                        }
                     }
-                } else {
-                    if (authOverlay) authOverlay.classList.add('hidden');
-                    if (headerSignInBtn) headerSignInBtn.classList.add('hidden');
-                    if (userProfileHeader) userProfileHeader.classList.remove('hidden');
-                    
-                    updateHeaderUserProfile(user);
+                } catch(e) {
+                    console.log('Focus reload check:', e);
                 }
             }
         });
@@ -510,8 +526,23 @@
             const password = document.getElementById('signInPassword').value;
 
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showToast('Signed in successfully!', 'success');
+                const userCred = await signInWithEmailAndPassword(auth, email, password);
+                await userCred.user.reload();
+                currentUser = userCred.user;
+                window.currentUser = userCred.user;
+                updateHeaderUserProfile(userCred.user);
+
+                if (!userCred.user.emailVerified) {
+                    document.getElementById('authTabs').classList.add('hidden');
+                    document.getElementById('signInForm').classList.add('hidden');
+                    document.getElementById('signUpForm').classList.add('hidden');
+                    document.getElementById('verifyPendingScreen').classList.remove('hidden');
+                    document.getElementById('verifyEmailTarget').innerText = userCred.user.email;
+                    showToast('Please verify your email before creating streams.', 'info');
+                } else {
+                    showToast('Signed in successfully!', 'success');
+                    closeAuthOverlay();
+                }
             } catch (err) {
                 showAuthError(err.message.replace('Firebase: ', ''));
             }
@@ -525,11 +556,34 @@
             const password = document.getElementById('signUpPassword').value;
 
             try {
+                // 1. Create User
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await updateProfile(userCredential.user, { displayName: username });
-                await sendEmailVerification(userCredential.user);
-                showToast('Verification email sent! Check your inbox.', 'info');
+                
+                // 2. Set Username
+                try {
+                    await updateProfile(userCredential.user, { displayName: username });
+                } catch(profileErr) {
+                    console.warn("Could not update profile:", profileErr);
+                }
+
+                // 3. Force Verification Email
+                try {
+                    await sendEmailVerification(userCredential.user);
+                    showToast('Verification email sent! Check inbox & spam folder.', 'success');
+                } catch(emailErr) {
+                    console.error("Email send error:", emailErr);
+                    showAuthError("Account created, but email send failed: " + emailErr.message);
+                }
+
+                // Display verification prompt screen
+                document.getElementById('authTabs').classList.add('hidden');
+                document.getElementById('signInForm').classList.add('hidden');
+                document.getElementById('signUpForm').classList.add('hidden');
+                document.getElementById('verifyPendingScreen').classList.remove('hidden');
+                document.getElementById('verifyEmailTarget').innerText = email;
+
             } catch (err) {
+                console.error("Signup error:", err);
                 showAuthError(err.message.replace('Firebase: ', ''));
             }
         };
@@ -538,12 +592,15 @@
             if (!auth.currentUser) return;
             try {
                 await auth.currentUser.reload();
+                currentUser = auth.currentUser;
+                window.currentUser = auth.currentUser;
+                updateHeaderUserProfile(auth.currentUser);
+
                 if (auth.currentUser.emailVerified) {
                     showToast('Email verified successfully!', 'success');
                     document.getElementById('authOverlay').classList.add('hidden');
-                    updateHeaderUserProfile(auth.currentUser);
                 } else {
-                    showAuthError('Email not verified yet. Please check your inbox.');
+                    showAuthError('Email not verified yet. Please check your inbox and click the verification link.');
                 }
             } catch (err) {
                 showAuthError(err.message);
@@ -555,8 +612,13 @@
             try {
                 await sendEmailVerification(auth.currentUser);
                 showToast('Verification email resent!', 'info');
+                hideAuthError();
             } catch (err) {
-                showAuthError(err.message);
+                if (err.code === 'auth/too-many-requests') {
+                    showAuthError('Too many attempts. Please wait a few minutes before trying again.');
+                } else {
+                    showAuthError(err.message.replace('Firebase: ', ''));
+                }
             }
         };
 
@@ -600,10 +662,26 @@
         }
 
         function updateHeaderUserProfile(user) {
+            if (!user) return;
             const name = user.displayName || user.email.split('@')[0];
             document.getElementById('userHeaderName').innerText = name;
             document.getElementById('userHeaderAvatar').innerText = name.charAt(0).toUpperCase();
-            document.getElementById('channelAvatarInitial').innerText = name.charAt(0).toUpperCase();
+            
+            const badge = document.getElementById('userVerificationBadge');
+            if (badge) {
+                if (!user.emailVerified) {
+                    badge.innerText = 'Unverified';
+                    badge.className = 'text-[9px] text-amber-400 font-medium';
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.innerText = '✓ Verified';
+                    badge.className = 'text-[9px] text-emerald-400 font-semibold';
+                    badge.classList.remove('hidden');
+                }
+            }
+
+            const avatarInit = document.getElementById('channelAvatarInitial');
+            if (avatarInit) avatarInit.innerText = name.charAt(0).toUpperCase();
             window.myUsername = name;
 
             const setupInput = document.getElementById('setupChannelName');
@@ -1000,8 +1078,8 @@
         }
 
         function openGoLiveModal() { 
-            if (!window.currentUser || !window.currentUser.emailVerified) {
-                showToast('Please sign in and verify your account to create a room!', 'info');
+            if (!window.currentUser) {
+                showToast('Please sign in to create a room!', 'info');
                 if (window.openAuthModal) window.openAuthModal('signin');
                 return;
             }
