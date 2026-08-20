@@ -73,6 +73,26 @@
     <main class="flex-grow container mx-auto px-4 py-8 flex flex-col items-center">
         
         <!-- View Containers - Only one should be visible at a time -->
+
+        <!-- === AUTHENTICATION UI === -->
+        <div id="view-auth" class="hidden w-full max-w-md bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-xl mt-10">
+            <div class="flex justify-center mb-6">
+                <div class="w-12 h-12 rounded-[14px] bg-gradient-to-tr from-violet-700 via-fuchsia-600 to-pink-500 flex items-center justify-center shadow-[0_0_15px_rgba(192,38,211,0.4)]">
+                    <i class="fa-solid fa-play text-white text-xl ml-1"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-6 text-center" id="auth-title">Sign in to Nexus</h2>
+            <form id="auth-form" class="flex flex-col gap-4">
+                <input type="email" id="auth-email" placeholder="Email Address" class="w-full bg-slate-900 text-white rounded-lg px-4 py-3 border border-slate-700 focus:border-cyan-500 focus:outline-none transition-colors" required>
+                <input type="password" id="auth-password" placeholder="Password" class="w-full bg-slate-900 text-white rounded-lg px-4 py-3 border border-slate-700 focus:border-cyan-500 focus:outline-none transition-colors" required>
+                <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-3 rounded-lg mt-2 transition-colors shadow-[0_0_10px_rgba(34,211,238,0.2)]" id="auth-submit-btn">Login</button>
+            </form>
+            <div id="auth-error" class="text-red-400 text-sm mt-4 text-center hidden bg-red-400/10 py-2 rounded border border-red-500/20"></div>
+            <div class="mt-6 text-center text-slate-400 text-sm">
+                <span id="auth-toggle-text">Don't have an account?</span> 
+                <button id="auth-toggle-btn" class="text-cyan-400 hover:text-cyan-300 font-medium ml-1">Sign up</button>
+            </div>
+        </div>
         
         <!-- === STOREFRONT UI === -->
         <div id="view-storefront" class="w-full max-w-6xl w-full flex flex-col gap-6">
@@ -113,7 +133,7 @@
     <!-- === FIREBASE SETUP === -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration provided by user
@@ -137,6 +157,12 @@
         window.auth = auth;
         window.collection = collection;
         window.getDocs = getDocs;
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
 
         console.log("Firebase Initialized.");
     </script>
@@ -153,6 +179,7 @@
 
         // --- DOM ELEMENTS ---
         const views = {
+            auth: document.getElementById('view-auth'),
             storefront: document.getElementById('view-storefront'),
             upload: document.getElementById('view-upload'),
             player: document.getElementById('view-player')
@@ -275,11 +302,94 @@
         // --- EVENT LISTENERS ---
         logoBtn.addEventListener('click', () => switchView('storefront'));
 
+        // --- AUTHENTICATION LOGIC ---
+        let isLoginMode = true;
+        const authForm = document.getElementById('auth-form');
+        const authEmail = document.getElementById('auth-email');
+        const authPassword = document.getElementById('auth-password');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleBtn = document.getElementById('auth-toggle-btn');
+        const authToggleText = document.getElementById('auth-toggle-text');
+        const authTitle = document.getElementById('auth-title');
+        const authError = document.getElementById('auth-error');
+
+        authToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            authTitle.innerText = isLoginMode ? "Sign in to Nexus" : "Create an Account";
+            authSubmitBtn.innerText = isLoginMode ? "Login" : "Sign Up";
+            authToggleText.innerText = isLoginMode ? "Don't have an account?" : "Already have an account?";
+            authToggleBtn.innerText = isLoginMode ? "Sign up" : "Log in";
+            authError.classList.add('hidden');
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authError.classList.add('hidden');
+            const email = authEmail.value;
+            const password = authPassword.value;
+            const originalBtnText = authSubmitBtn.innerText;
+            authSubmitBtn.innerText = "Processing...";
+            authSubmitBtn.disabled = true;
+
+            try {
+                if (isLoginMode) {
+                    await window.signInWithEmailAndPassword(window.auth, email, password);
+                } else {
+                    await window.createUserWithEmailAndPassword(window.auth, email, password);
+                }
+                // Success - onAuthStateChanged will handle the redirect
+            } catch (error) {
+                console.error("Auth error:", error);
+                authError.innerText = error.message.replace('Firebase: ', ''); // Clean up the error slightly
+                authError.classList.remove('hidden');
+            } finally {
+                authSubmitBtn.innerText = originalBtnText;
+                authSubmitBtn.disabled = false;
+            }
+        });
+
         // --- INITIALIZATION ---
         function init() {
             console.log("Nexus Store initialized.");
-            switchView('storefront');
-            // Initial render calls will go here later
+            
+            // Wait for Firebase to load then setup Auth Listener
+            const checkAuth = setInterval(() => {
+                if (window.auth && window.onAuthStateChanged) {
+                    clearInterval(checkAuth);
+                    
+                    window.onAuthStateChanged(window.auth, (user) => {
+                        if (user) {
+                            console.log("User logged in:", user.email);
+                            state.currentUser = user;
+                            
+                            // Update header UI for logged-in user
+                            const initial = user.email.charAt(0).toUpperCase();
+                            authControlsContainer.innerHTML = `
+                                <div class="flex items-center gap-4">
+                                    <span class="text-sm text-slate-400 hidden sm:block">${user.email}</span>
+                                    <div class="w-9 h-9 rounded-full bg-cyan-500 text-slate-900 flex items-center justify-center font-bold cursor-pointer hover:bg-cyan-400 transition-colors shadow-[0_0_10px_rgba(34,211,238,0.4)]" onclick="window.signOut(window.auth)" title="Sign Out">
+                                        ${initial}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Route to store if they were just logging in
+                            if (state.currentView === 'auth' || !state.currentView) {
+                                switchView('storefront');
+                            } else {
+                                switchView(state.currentView);
+                            }
+
+                        } else {
+                            console.log("No user logged in.");
+                            state.currentUser = null;
+                            authControlsContainer.innerHTML = `<button onclick="switchView('auth')" class="bg-slate-800 hover:bg-slate-700 text-white px-5 py-2 rounded-full text-sm font-medium border border-slate-700 transition-colors">Sign In</button>`;
+                            switchView('auth'); // Force to login screen
+                        }
+                    });
+                }
+            }, 50);
         }
 
         // Start the app
