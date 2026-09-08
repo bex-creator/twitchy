@@ -33,13 +33,13 @@
               400: '#34d399',
               500: '#10b981',
               600: '#01875f', /* Google Play Green */
-              700: '#046c4e',
+              700: '#00704f',
             },
             slate: {
               50: '#f8f9fa', /* Light surface */
               800: '#303134', /* Dark card */
-              900: '#202124', /* Dark background */
-              950: '#171717',
+              900: '#1f1f1f', /* Dark background */
+              950: '#121212',
             }
           }
         }
@@ -117,7 +117,7 @@
     }
   </style>
 </head>
-<body class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200 min-h-screen font-sans selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200 min-h-screen font-sans selection:bg-emerald-600 selection:text-white">
 
   <!-- APP ROOT -->
   <div id="app-root">
@@ -127,11 +127,11 @@
     <div class="flex flex-col flex-1 h-full min-w-0">
       <div class="flex items-center justify-between p-3 bg-slate-900 border-b border-slate-800 text-white shadow-md z-10">
         <div class="flex items-center gap-3">
-          <div id="app-viewer-icon" class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center overflow-hidden"></div>
+          <div id="app-viewer-icon" class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden"></div>
           <h3 id="app-viewer-title" class="font-bold text-sm truncate max-w-[200px] sm:max-w-md"></h3>
         </div>
         <div class="flex items-center gap-2">
-          <div id="reward-timer-container" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-bold mr-2 transition-all">
+          <div id="reward-timer-container" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-bold mr-2 transition-all">
             <i class="ph-fill ph-timer animate-pulse"></i> <span id="reward-timer-text">02:00</span>
           </div>
           <button data-click="openViewerInNewTab" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-300 hover:text-white" title="Open in New Tab"><i class="ph ph-arrow-square-out text-lg"></i></button>
@@ -144,8 +144,8 @@
     </div>
     
     <!-- Spectator Sidebar -->
-    <div id="spectator-sidebar" class="hidden w-80 bg-slate-800 border-l border-slate-700 flex-col h-full z-20 shadow-2xl flex-shrink-0">
-       <div class="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-900">
+    <div id="spectator-sidebar" class="hidden w-80 bg-slate-900 border-l border-slate-800 flex-col h-full z-20 shadow-2xl flex-shrink-0">
+       <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
           <div class="flex items-center gap-2">
              <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
              <span class="font-bold text-white uppercase tracking-widest text-xs">Live Spectator</span>
@@ -155,15 +155,15 @@
        <div id="spectator-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar text-sm flex flex-col">
           <div class="text-slate-500 italic text-xs text-center mb-auto mt-auto">Welcome to the spectator chat! Connecting...</div>
        </div>
-       <form data-submit="submitSpectatorChat" class="p-3 border-t border-slate-700 bg-slate-900 flex gap-2">
-          <input type="text" id="spectator-chat-input" autocomplete="off" placeholder="Say something..." class="flex-1 bg-slate-800 border border-slate-600 text-white px-3 py-2 rounded-full text-sm outline-none focus:border-emerald-500">
+       <form data-submit="submitSpectatorChat" class="p-3 border-t border-slate-800 bg-slate-950 flex gap-2">
+          <input type="text" id="spectator-chat-input" autocomplete="off" placeholder="Say something..." class="flex-1 bg-slate-800 border border-slate-700 text-white px-3 py-2 rounded-full text-sm outline-none focus:border-emerald-500">
           <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-full transition-colors"><i class="ph-bold ph-paper-plane-tilt"></i></button>
        </form>
     </div>
   </div>
 
   <!-- Banned Overlay -->
-  <div id="banned-overlay" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900 px-4">
+  <div id="banned-overlay" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-950 px-4">
     <div class="max-w-md w-full text-center animate-zoom-in">
       <div class="w-20 h-20 mx-auto bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-6 border border-red-500/20">
         <i class="ph-bold ph-prohibit text-4xl"></i>
@@ -173,22 +173,38 @@
     </div>
   </div>
 
-  <!-- News Bookmark -->
-  <button data-click="toggleNewsPanel" class="fixed top-1/3 right-0 z-50 bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-l-xl shadow-md transition-transform group flex flex-col items-center gap-2">
-    <div class="relative">
-      <i class="ph-fill ph-newspaper text-2xl"></i>
-      <span id="news-badge" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">1</span>
-    </div>
-  </button>
+  <!-- Floating Right Action Bookmarks -->
+  <div class="fixed top-1/3 right-0 z-50 flex flex-col gap-2 pointer-events-none">
+    <!-- News Bookmark -->
+    <button data-click="toggleNewsPanel" class="pointer-events-auto bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-l-2xl shadow-lg transition-transform hover:-translate-x-1 flex items-center justify-center">
+      <div class="relative flex items-center justify-center">
+        <i class="ph-fill ph-newspaper text-xl"></i>
+        <span id="news-badge" class="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">1</span>
+      </div>
+    </button>
+
+    <!-- Inbox Bookmark -->
+    <button id="inbox-bookmark" data-click="toggleInboxPanel" class="hidden pointer-events-auto bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-l-2xl shadow-lg transition-transform hover:-translate-x-1 flex items-center justify-center">
+      <div class="relative flex items-center justify-center">
+        <i class="ph-fill ph-envelope-simple text-xl"></i>
+        <span id="unread-badge" class="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">0</span>
+      </div>
+    </button>
+
+    <!-- Desktop Mode Bookmark -->
+    <button id="desktop-bookmark" data-click="toggleDesktopMode" class="hidden pointer-events-auto bg-slate-700 hover:bg-slate-800 text-white p-2.5 rounded-l-2xl shadow-lg transition-transform hover:-translate-x-1 flex items-center justify-center">
+      <i class="ph-fill ph-desktop text-xl"></i>
+    </button>
+  </div>
 
   <!-- News Sidebar Panel -->
   <div id="news-overlay" data-click="toggleNewsPanel" class="fixed inset-0 z-[105] bg-black/50 hidden opacity-0 transition-opacity duration-300"></div>
-  <div id="news-panel" class="fixed inset-y-0 right-0 z-[110] w-full max-w-sm bg-white dark:bg-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
-    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
+  <div id="news-panel" class="fixed inset-y-0 right-0 z-[110] w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-200 dark:border-slate-800">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
       <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
         <i class="ph-fill ph-newspaper text-emerald-600"></i> Updates
       </h2>
-      <button data-click="toggleNewsPanel" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500">
+      <button data-click="toggleNewsPanel" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500">
         <i class="ph ph-x text-xl"></i>
       </button>
     </div>
@@ -197,27 +213,14 @@
     </div>
   </div>
 
-  <!-- Inbox Bookmark -->
-  <button id="inbox-bookmark" data-click="toggleInboxPanel" class="hidden fixed top-1/2 mt-16 right-0 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-l-xl shadow-md transition-transform group flex flex-col items-center gap-2">
-    <div class="relative">
-      <i class="ph-fill ph-envelope-simple text-2xl"></i>
-      <span id="unread-badge" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white dark:border-slate-900">0</span>
-    </div>
-  </button>
-
-  <!-- Desktop Mode Bookmark -->
-  <button id="desktop-bookmark" data-click="toggleDesktopMode" class="hidden fixed top-1/2 mt-32 right-0 z-50 bg-slate-600 hover:bg-slate-700 text-white p-3 rounded-l-xl shadow-md transition-transform flex flex-col items-center gap-2">
-    <i class="ph-fill ph-desktop text-2xl"></i>
-  </button>
-
   <!-- Inbox Sidebar Panel -->
   <div id="inbox-overlay" data-click="toggleInboxPanel" class="fixed inset-0 z-[105] bg-black/50 hidden opacity-0 transition-opacity duration-300"></div>
-  <div id="inbox-panel" class="fixed inset-y-0 right-0 z-[110] w-full max-w-sm bg-white dark:bg-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
-    <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
+  <div id="inbox-panel" class="fixed inset-y-0 right-0 z-[110] w-full max-w-sm bg-white dark:bg-slate-900 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col border-l border-slate-200 dark:border-slate-800">
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900">
       <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
         <i class="ph-fill ph-envelope-simple text-blue-600"></i> Messages
       </h2>
-      <button data-click="toggleInboxPanel" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500">
+      <button data-click="toggleInboxPanel" class="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500">
         <i class="ph ph-x text-xl"></i>
       </button>
     </div>
@@ -227,14 +230,14 @@
   </div>
 
   <!-- Monthly Feedback Modal -->
-  <div id="monthly-feedback-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/50 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-zoom-in text-center">
+  <div id="monthly-feedback-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 px-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 animate-zoom-in text-center">
         <i class="ph-fill ph-chat-circle-text text-4xl text-emerald-600 mb-4 inline-block"></i>
         <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">NexusStore Feedback</h2>
         <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">What features or apps would you like to see added?</p>
-        <textarea id="monthly-feedback-text" class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700 dark:text-white resize-none" rows="3" placeholder="I'd love to see..."></textarea>
+        <textarea id="monthly-feedback-text" class="w-full border rounded-2xl px-4 py-3 mb-4 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none" rows="3" placeholder="I'd love to see..."></textarea>
         <div class="flex gap-3">
-            <button data-click="skipMonthlyFeedback" class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 rounded-full font-bold text-sm transition-colors">Skip</button>
+            <button data-click="skipMonthlyFeedback" class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 rounded-full font-bold text-sm transition-colors">Skip</button>
             <button data-click="submitMonthlyFeedback" class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold text-sm transition-colors shadow-sm">Submit Idea</button>
         </div>
     </div>
@@ -242,8 +245,8 @@
 
   <!-- AI Assistant Modal -->
   <div id="ai-modal" class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/60 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col h-[500px] animate-zoom-in">
-      <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl flex flex-col h-[500px] border border-slate-200 dark:border-slate-800 animate-zoom-in">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-800 pb-4">
          <div>
              <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                <i class="ph-fill ph-sparkle text-emerald-600"></i> AI Assistant
@@ -254,15 +257,15 @@
            <i class="ph-bold ph-x text-lg"></i>
          </button>
       </div>
-      <div id="ai-progress-container" class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1 mb-4 overflow-hidden">
-        <div id="ai-progress-bar" class="bg-emerald-500 h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
+      <div id="ai-progress-container" class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 mb-4 overflow-hidden">
+        <div id="ai-progress-bar" class="bg-emerald-600 h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
       </div>
       <div id="ai-chat-history" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4 flex flex-col">
-         <div class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 p-3 rounded-2xl rounded-tl-none max-w-[85%] self-start text-sm leading-relaxed shadow-sm">Hello! I'm the Nexus AI. How can I help you discover apps today?</div>
+         <div class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3.5 rounded-2xl rounded-tl-none max-w-[85%] self-start text-sm leading-relaxed shadow-sm">Hello! I'm the Nexus AI. How can I help you discover apps today?</div>
       </div>
       <form data-submit="submitAiChat" class="mt-4 flex gap-2">
-         <input type="text" id="ai-chat-input" disabled placeholder="Ask something..." class="flex-1 border rounded-full px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 border-slate-300 text-sm dark:bg-slate-900 dark:border-slate-700 dark:text-white disabled:opacity-50">
-         <button type="submit" id="ai-chat-submit" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm">
+         <input type="text" id="ai-chat-input" disabled placeholder="Ask something..." class="flex-1 border rounded-full px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none bg-slate-50 border-slate-200 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white disabled:opacity-50">
+         <button type="submit" id="ai-chat-submit" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm flex-shrink-0">
            <i class="ph-bold ph-paper-plane-tilt"></i>
          </button>
       </form>
@@ -271,7 +274,7 @@
 
   <!-- Auth Modal -->
   <div id="auth-modal" class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/60 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-zoom-in">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 animate-zoom-in">
       <div class="text-center mb-6">
         <div class="w-12 h-12 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 mb-3">
           <i class="ph-fill ph-lock-key text-2xl"></i>
@@ -282,11 +285,11 @@
       <form data-submit="submitAuth" id="auth-form" class="space-y-4">
         <div>
           <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Email</label>
-          <input type="email" id="auth-email" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm">
+          <input type="email" id="auth-email" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white text-sm">
         </div>
         <div>
           <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Password</label>
-          <input type="password" id="auth-password" required minlength="6" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white text-sm">
+          <input type="password" id="auth-password" required minlength="6" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white text-sm">
           <div class="flex justify-end mt-1">
             <button type="button" data-click="forgotPassword" id="auth-forgot-btn" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">Forgot Password?</button>
           </div>
@@ -305,7 +308,7 @@
 
   <!-- Username Onboarding Overlay -->
   <div id="view-onboarding" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center">
       <div class="w-16 h-16 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-4 text-emerald-600">
         <i class="ph-fill ph-user-circle text-3xl"></i>
       </div>
@@ -313,7 +316,7 @@
       <p class="text-slate-500 mb-6 text-sm">Choose a public username.</p>
       
       <form data-submit="submitUsername">
-        <input type="text" id="onboarding-username" required minlength="3" maxlength="50" placeholder="Username" class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-emerald-500 outline-none text-center bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
+        <input type="text" id="onboarding-username" required minlength="3" maxlength="50" placeholder="Username" class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-emerald-600 outline-none text-center bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
         <button type="submit" id="onboarding-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-full font-bold transition-colors shadow-sm">
           Continue
         </button>
@@ -323,7 +326,7 @@
 
   <!-- Edit Profile Modal -->
   <div id="edit-profile-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-slate-900 dark:text-white">Edit Profile</h2>
         <button data-click="closeProfileModal" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full">
@@ -334,43 +337,43 @@
       <form data-submit="submitProfileEdits" class="space-y-4">
         <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Username</label>
-            <input type="text" id="edit-username" required minlength="3" maxlength="50" class="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
+            <input type="text" id="edit-username" required minlength="3" maxlength="50" class="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
         </div>
         
         <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Avatar Style</label>
-            <select id="edit-avatar-style" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+            <select id="edit-avatar-style" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
               <!-- Populated by JS -->
             </select>
         </div>
 
         <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Profile Banner</label>
-            <select id="edit-banner-style" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+            <select id="edit-banner-style" class="w-full border rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
               <!-- Populated by JS -->
             </select>
         </div>
 
-        <div id="custom-banner-container" class="hidden bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+        <div id="custom-banner-container" class="hidden bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Custom Banner (Pro)</label>
             <input type="file" accept="image/*" id="custom-banner-input" class="w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/30 dark:file:text-emerald-400 cursor-pointer">
             <div class="flex gap-2 mt-2">
-                <input type="text" id="ai-banner-prompt" placeholder="AI generation prompt..." class="flex-1 border rounded-lg px-2 py-1 bg-white border-slate-300 dark:bg-slate-800 dark:border-slate-600 text-xs outline-none focus:border-emerald-500">
+                <input type="text" id="ai-banner-prompt" placeholder="AI generation prompt..." class="flex-1 border rounded-lg px-2 py-1 bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-700 text-xs outline-none focus:border-emerald-600">
                 <button type="button" data-click="generateAiBanner" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold">AI Gen</button>
             </div>
-            <img id="custom-banner-preview" class="w-full h-20 object-cover mt-2 rounded-lg hidden border border-slate-200 dark:border-slate-700" />
+            <img id="custom-banner-preview" class="w-full h-20 object-cover mt-2 rounded-xl hidden border border-slate-200 dark:border-slate-700" />
         </div>
 
         <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Bio</label>
-            <textarea id="edit-bio" rows="2" maxlength="200" placeholder="Bio..." class="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white resize-none"></textarea>
+            <textarea id="edit-bio" rows="2" maxlength="200" placeholder="Bio..." class="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none"></textarea>
         </div>
         
         <button type="submit" id="edit-profile-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-full font-bold text-sm shadow-sm">
           Save
         </button>
 
-        <div class="pt-4 mt-2 border-t border-slate-200 dark:border-slate-700">
+        <div class="pt-4 mt-2 border-t border-slate-200 dark:border-slate-800">
             <button type="button" data-click="handleSignOut" class="w-full text-red-600 dark:text-red-400 py-2 rounded-full font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
               Sign Out
             </button>
@@ -381,7 +384,7 @@
 
   <!-- Create Ad Modal -->
   <div id="create-ad-modal" class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/60 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 animate-zoom-in">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">Promote App</h2>
         <button data-click="closeModal" data-arg="create-ad-modal" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full">
@@ -394,15 +397,15 @@
         <input type="hidden" id="ad-target-app-id">
         <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Tagline</label>
-            <input type="text" id="ad-text" required maxlength="80" placeholder="Short description..." class="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
+            <input type="text" id="ad-text" required maxlength="80" placeholder="Short description..." class="w-full border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
         </div>
         
         <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Banner Image (Optional)</label>
-            <div class="relative h-32 border-2 border-dashed rounded-xl flex flex-col items-center justify-center bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700 overflow-hidden group hover:border-emerald-500">
+            <div class="relative h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 overflow-hidden group hover:border-emerald-600 transition-colors">
               <input type="file" accept="image/*" id="ad-image-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
               <img id="ad-image-preview" class="absolute inset-0 w-full h-full object-cover hidden" />
-              <div id="ad-image-placeholder" class="text-center text-slate-400 group-hover:text-emerald-500">
+              <div id="ad-image-placeholder" class="text-center text-slate-400 group-hover:text-emerald-600">
                 <i class="ph ph-image text-2xl mx-auto block"></i>
                 <span class="text-xs">Upload</span>
               </div>
@@ -418,7 +421,7 @@
 
   <!-- Nexus+ (Play Pass) Modal -->
   <div id="nexus-plus-modal" class="fixed inset-0 z-[200] hidden items-center justify-center bg-black/60 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center animate-zoom-in">
       <div class="w-12 h-12 mx-auto bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center text-emerald-600 mb-4">
         <i class="ph-fill ph-ticket text-2xl"></i>
       </div>
@@ -450,7 +453,7 @@
 
   <!-- Theme Selection Modal -->
   <div id="theme-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 px-4">
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 animate-zoom-in">
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-lg font-bold text-slate-900 dark:text-white">Settings</h2>
         <button data-click="closeModal" data-arg="theme-modal" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full">
@@ -477,33 +480,33 @@
       <div class="mb-6">
         <label class="block text-xs font-bold mb-3 uppercase tracking-wide text-slate-500">Appearance</label>
         <div class="grid grid-cols-2 gap-2">
-          <button data-click="setThemeMode" data-arg="light" class="mode-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Light</button>
-          <button data-click="setThemeMode" data-arg="dark" class="mode-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Dark</button>
-          <button data-click="setThemeMode" data-arg="oled" class="mode-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">OLED</button>
-          <button data-click="setThemeMode" data-arg="space" class="mode-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Space</button>
+          <button data-click="setThemeMode" data-arg="light" class="mode-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Light</button>
+          <button data-click="setThemeMode" data-arg="dark" class="mode-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Dark</button>
+          <button data-click="setThemeMode" data-arg="oled" class="mode-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">OLED</button>
+          <button data-click="setThemeMode" data-arg="space" class="mode-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Space</button>
         </div>
       </div>
 
       <div>
         <label class="block text-xs font-bold mb-3 uppercase tracking-wide text-slate-500">Cursor</label>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <button data-click="setCursorStyle" data-arg="modern" class="cursor-btn p-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Modern</button>
-          <button data-click="setCursorStyle" data-arg="spaceship" class="cursor-btn p-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Ship</button>
-          <button data-click="setCursorStyle" data-arg="minimal" class="cursor-btn p-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Minimal</button>
-          <button data-click="setCursorStyle" data-arg="retro" class="cursor-btn p-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Retro</button>
-          <button data-click="setCursorStyle" data-arg="magic" class="cursor-btn p-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Magic</button>
+          <button data-click="setCursorStyle" data-arg="modern" class="cursor-btn p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Modern</button>
+          <button data-click="setCursorStyle" data-arg="spaceship" class="cursor-btn p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Ship</button>
+          <button data-click="setCursorStyle" data-arg="minimal" class="cursor-btn p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Minimal</button>
+          <button data-click="setCursorStyle" data-arg="retro" class="cursor-btn p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Retro</button>
+          <button data-click="setCursorStyle" data-arg="magic" class="cursor-btn p-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Magic</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Vault Bookmark Toggle -->
-  <button id="vault-mode-toggle" data-click="toggleVaultMode" class="fixed bottom-20 sm:bottom-6 left-4 sm:left-6 z-40 bg-slate-800 text-white px-4 py-2 rounded-full font-bold shadow-lg text-sm hidden items-center gap-1.5 border border-slate-700">
-    <i class="ph-fill ph-vault"></i> Vault
+  <button id="vault-mode-toggle" data-click="toggleVaultMode" class="fixed bottom-20 sm:bottom-6 left-4 sm:left-6 z-40 bg-slate-900 text-white px-4 py-2 rounded-full font-bold shadow-lg text-sm hidden items-center gap-1.5 border border-slate-800 hover:bg-slate-800 transition-colors">
+    <i class="ph-fill ph-vault text-emerald-500"></i> Vault
   </button>
 
   <!-- Mobile Bottom Navigation -->
-  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-2 pt-1 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+  <nav class="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-2 pt-1 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
     <div class="flex items-center justify-around h-14">
       <button data-click="navigate" data-arg="home" class="flex flex-col items-center justify-center w-full h-full text-emerald-600 dark:text-emerald-500">
         <i class="ph-fill ph-game-controller text-xl"></i>
@@ -543,7 +546,7 @@
         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           <i class="ph ph-magnifying-glass text-slate-500 text-lg"></i>
         </div>
-        <input type="text" id="search-input" placeholder="Search apps & games" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2.5 pl-11 pr-12 focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-sm text-slate-900 dark:text-white placeholder-slate-500" />
+        <input type="text" id="search-input" placeholder="Search apps & games" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2.5 pl-11 pr-12 focus:ring-2 focus:ring-emerald-600 outline-none font-medium text-sm text-slate-900 dark:text-white placeholder-slate-500" />
         <div class="absolute inset-y-0 right-1 flex items-center pr-1 gap-1">
           <button id="clear-search-btn" data-click="clearSearch" class="hidden h-8 w-8 text-slate-500 hover:text-slate-700 dark:hover:text-white flex items-center justify-center rounded-full transition-colors" title="Clear Search">
             <i class="ph-bold ph-x"></i>
@@ -557,13 +560,13 @@
 
       <div class="flex items-center gap-2 sm:gap-4">
         
-        <button id="coin-balance-container" data-click="showCoinRequestModal" class="hidden items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-emerald-600 rounded-full font-bold text-xs cursor-pointer transition-colors" title="Request Nexus Coins">
+        <button id="coin-balance-container" data-click="showCoinRequestModal" class="hidden items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-amber-500 rounded-full font-bold text-xs cursor-pointer transition-colors" title="Request Nexus Coins">
           <i class="ph-fill ph-coin"></i>
           <span id="coin-balance-text">0</span>
         </button>
 
-        <div id="user-profile" class="flex items-center gap-2 cursor-pointer p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800" data-click="profileLink" title="Account">
-          <img id="user-avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=User&backgroundColor=01875f" class="w-8 h-8 rounded-full object-cover border border-slate-300 dark:border-slate-600" />
+        <div id="user-profile" class="flex items-center gap-2 cursor-pointer p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" data-click="profileLink" title="Account">
+          <img id="user-avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=User&backgroundColor=01875f" class="w-8 h-8 rounded-full object-cover border border-slate-300 dark:border-slate-700" />
           <span id="user-name" class="hidden"></span>
         </div>
         
@@ -604,7 +607,7 @@
           <!-- Populated by JS -->
         </div>
         <div class="relative flex-shrink-0 hidden sm:block">
-          <select id="sort-filter" onchange="window.setSort(this.value)" class="appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-full pl-4 pr-8 py-1.5 focus:outline-none cursor-pointer">
+          <select id="sort-filter" onchange="window.setSort(this.value)" class="appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-sm rounded-full pl-4 pr-8 py-1.5 focus:outline-none cursor-pointer shadow-sm">
             <option value="trending">🔥 Trending</option>
             <option value="newest">✨ New Releases</option>
             <option value="top_rated">⭐ Top Rated</option>
@@ -617,25 +620,35 @@
       </div>
 
       <div id="home-empty" class="hidden flex-col items-center justify-center py-20 text-center animate-fade-in">
-        <i class="ph ph-magnifying-glass text-5xl text-slate-300 mb-4"></i>
+        <i class="ph ph-magnifying-glass text-5xl text-slate-400 mb-4"></i>
         <h2 class="text-xl font-bold mb-1 text-slate-800 dark:text-white">No results found</h2>
         <p class="text-slate-500 text-sm">Try different keywords or categories.</p>
       </div>
 
-      <!-- Top Section -->
-      <div class="flex flex-col xl:flex-row gap-6 mb-10">
-        <section id="home-picks" class="flex-1 w-full hidden">
-          <div class="flex items-center justify-between mb-4">
+      <!-- Hero & Sponsored Layout Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 items-stretch">
+        <!-- Recommended Hero Card (2 Cols) -->
+        <section id="home-picks" class="lg:col-span-2 w-full hidden flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">Recommended for you</h2>
+            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">Explore All</span>
           </div>
-          <div id="picks-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+          <div id="picks-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+            <!-- Hero items injected here by JS -->
+          </div>
         </section>
 
-        <div id="home-sponsored-sidebar" class="w-full xl:w-[320px] flex-shrink-0 hidden">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Sponsored</h2>
+        <!-- Sponsored Card (1 Col) -->
+        <div id="home-sponsored-sidebar" class="w-full flex-col hidden justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <i class="ph-fill ph-megaphone text-amber-500"></i> Sponsored
+            </h2>
+            <span class="text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full">AD</span>
           </div>
-          <div id="sponsored-container" class="flex flex-col gap-4"></div>
+          <div id="sponsored-container" class="flex flex-col gap-4 flex-1">
+            <!-- Sponsored item injected here by JS -->
+          </div>
         </div>
       </div>
 
@@ -657,7 +670,7 @@
         <div id="smart-match-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"></div>
       </section>
 
-      <!-- Trending Now -->
+      <!-- Main App Catalog Grid -->
       <section id="home-grid-section" class="hidden pb-10">
         <div class="flex items-center mb-4">
           <h2 id="grid-title" class="text-lg font-bold text-slate-900 dark:text-white">Top Rated Apps & Games</h2>
@@ -674,11 +687,11 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+           <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <h3 class="font-bold text-slate-900 dark:text-white mb-4">Top Users</h3>
               <div id="leaderboard-users" class="space-y-3"></div>
            </div>
-           <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+           <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <h3 class="font-bold text-slate-900 dark:text-white mb-4">Top Grossing</h3>
               <div id="leaderboard-apps" class="space-y-3"></div>
            </div>
@@ -694,7 +707,7 @@
       <div class="max-w-3xl mx-auto pt-4">
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Support & Help</h1>
         
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 mb-8">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-800 mb-8">
           <div class="space-y-6">
              <div>
                <h3 class="font-bold text-slate-900 dark:text-white mb-1">How do I publish my app?</h3>
@@ -707,10 +720,10 @@
           </div>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
           <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Send Feedback</h2>
           <form data-submit="submitFeedback">
-             <textarea id="feedback-input" required rows="4" class="w-full border rounded-xl px-4 py-3 mb-4 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-950 dark:border-slate-700 dark:text-white resize-none" placeholder="Describe your issue or suggestion..."></textarea>
+             <textarea id="feedback-input" required rows="4" class="w-full border rounded-2xl px-4 py-3 mb-4 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none" placeholder="Describe your issue or suggestion..."></textarea>
              <button type="submit" id="feedback-submit-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors shadow-sm">
                Submit
              </button>
@@ -723,12 +736,12 @@
     <div id="view-profile" class="view-section hidden animate-fade-in">
       <div class="max-w-5xl mx-auto pt-4">
         
-        <div id="profile-header-card" class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-8">
+        <div id="profile-header-card" class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mb-8 overflow-hidden">
            <!-- Content injected by JS -->
         </div>
 
         <div id="wrapped-section" class="hidden mb-8">
-           <div class="bg-emerald-600 rounded-2xl p-6 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+           <div class="bg-emerald-600 rounded-3xl p-6 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                   <h2 class="text-lg font-bold flex items-center gap-2"><i class="ph-fill ph-sparkle text-emerald-200"></i> Nexus Recap</h2>
                   <p class="text-sm text-emerald-100">AI summary of your monthly activity.</p>
@@ -737,7 +750,7 @@
                  Reveal Recap
               </button>
            </div>
-           <div id="wrapped-result-container" class="hidden mt-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+           <div id="wrapped-result-container" class="hidden mt-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
                <p id="wrapped-result-text" class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line"></p>
            </div>
         </div>
@@ -788,7 +801,7 @@
              <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col">
                 <div class="flex items-center justify-between mb-4">
                    <h3 class="font-bold text-slate-900 dark:text-white text-sm">Performance</h3>
-                   <select id="analytics-timeframe" onchange="window.updateAnalyticsChart(this.value)" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-2 py-1 rounded outline-none">
+                   <select id="analytics-timeframe" onchange="window.updateAnalyticsChart(this.value)" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-2 py-1 rounded-lg outline-none">
                        <option value="7d">7 Days</option>
                        <option value="30d">30 Days</option>
                        <option value="1y">1 Year</option>
@@ -824,7 +837,7 @@
 
     <!-- UPLOAD VIEW -->
     <div id="view-upload" class="view-section hidden animate-zoom-in">
-      <div class="max-w-3xl mx-auto rounded-2xl shadow-sm border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <div class="max-w-3xl mx-auto rounded-3xl shadow-sm border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
         
         <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <h1 id="upload-title" class="text-xl font-bold text-slate-900 dark:text-white">Publish App</h1>
@@ -846,18 +859,18 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">App Name</label>
-              <input required id="app-title" type="text" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" placeholder="Name">
+              <input required id="app-title" type="text" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Name">
             </div>
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Developer</label>
-              <input required id="app-developer" type="text" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" placeholder="Studio">
+              <input required id="app-developer" type="text" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Studio">
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Category</label>
-              <select id="app-category" class="w-full border rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+              <select id="app-category" class="w-full border rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                 <option>Games</option>
                 <option>Productivity</option>
                 <option>Education</option>
@@ -868,16 +881,16 @@
             </div>
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Visibility</label>
-              <select id="app-visibility" class="w-full border rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+              <select id="app-visibility" class="w-full border rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                 <option value="public">Public</option>
                 <option value="private">Private</option>
               </select>
             </div>
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Price (Coins)</label>
-              <input id="app-price" type="number" min="0" value="0" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+              <input id="app-price" type="number" min="0" value="0" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
               <div class="flex items-center gap-1.5 mt-2">
-                 <input type="checkbox" id="app-dynamic-pricing" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                 <input type="checkbox" id="app-dynamic-pricing" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-600">
                  <label for="app-dynamic-pricing" class="text-[10px] font-bold text-slate-500">AI Pricing</label>
               </div>
             </div>
@@ -886,12 +899,12 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Version</label>
-              <input required id="app-version" type="text" value="1.0.0" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+              <input required id="app-version" type="text" value="1.0.0" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
             </div>
             <div>
                <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Changelog</label>
                <div class="flex gap-2">
-                   <input type="text" id="app-changelog" value="Initial Release" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                   <input type="text" id="app-changelog" value="Initial Release" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                    <button type="button" id="btn-auto-changelog" data-click="generateAutoChangelog" class="hidden text-xs bg-slate-100 text-slate-600 px-3 rounded-xl font-bold dark:bg-slate-800 dark:text-slate-300">Auto</button>
                </div>
             </div>
@@ -899,7 +912,7 @@
 
           <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Description</label>
-            <textarea required id="app-description" rows="3" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white resize-none"></textarea>
+            <textarea required id="app-description" rows="3" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white resize-none"></textarea>
           </div>
 
           <hr class="border-slate-200 dark:border-slate-800" />
@@ -907,17 +920,17 @@
           <div class="flex flex-col md:flex-row gap-6">
             <div>
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">App Icon</label>
-              <div class="relative w-24 h-24 border-2 border-dashed rounded-xl flex items-center justify-center bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-emerald-500 overflow-hidden cursor-pointer">
+              <div class="relative w-24 h-24 border-2 border-dashed rounded-2xl flex items-center justify-center bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:border-emerald-600 overflow-hidden cursor-pointer">
                 <input type="file" accept="image/*" id="app-icon-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                 <img id="icon-preview" class="w-full h-full object-cover hidden" />
                 <div id="icon-placeholder" class="text-slate-400 text-center"><i class="ph ph-image text-xl"></i></div>
               </div>
-              <button type="button" data-click="generateAiIcon" class="mt-2 w-24 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 py-1 rounded">AI Generate</button>
+              <button type="button" data-click="generateAiIcon" class="mt-2 w-24 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 py-1 rounded-lg">AI Generate</button>
             </div>
 
             <div class="flex-1">
               <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Screenshots</label>
-              <div class="relative border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center h-24 bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700 hover:border-emerald-500 cursor-pointer">
+              <div class="relative border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center h-24 bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 hover:border-emerald-600 cursor-pointer">
                 <input type="file" accept="image/*" multiple id="app-screenshots-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                 <div id="screenshots-preview" class="flex gap-2 w-full overflow-x-auto z-20 pointer-events-none hidden"></div>
                 <div id="screenshots-placeholder" class="text-center text-slate-400 text-xs font-medium">Click to upload (max 3)</div>
@@ -933,7 +946,7 @@
               <button type="button" id="btn-payload-url" class="px-4 py-1.5 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">URL</button>
             </div>
 
-            <div id="payload-code-container" class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden block">
+            <div id="payload-code-container" class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden block">
               <div class="flex items-center justify-between p-2 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                 <span class="text-xs font-bold text-slate-500 px-2">Editor</span>
                 <select onchange="window.loadIdeTemplate(this.value); this.value=''" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-600 text-[10px] rounded px-1 py-0.5 outline-none">
@@ -941,9 +954,9 @@
                    <option value="blank">Blank</option>
                 </select>
               </div>
-              <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                 <input type="text" id="ai-forge-input" placeholder="AI Prompt..." class="flex-1 bg-white border border-slate-300 dark:bg-slate-900 dark:border-slate-600 rounded px-2 py-1 text-xs outline-none focus:border-emerald-500">
-                 <button type="button" id="ai-forge-btn" data-click="generateAiApp" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">Gen</button>
+              <div class="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+                 <input type="text" id="ai-forge-input" placeholder="AI Prompt..." class="flex-1 bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-700 rounded-lg px-2 py-1 text-xs outline-none focus:border-emerald-600">
+                 <button type="button" id="ai-forge-btn" data-click="generateAiApp" class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold">Gen</button>
               </div>
               <div class="flex flex-col sm:flex-row h-64">
                 <div class="w-full sm:w-1/2 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-700 relative">
@@ -958,11 +971,11 @@
             </div>
 
             <div id="payload-url-container" class="hidden">
-              <input type="url" id="app-url" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" placeholder="https://">
+              <input type="url" id="app-url" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="https://">
             </div>
 
             <div class="mt-4 flex items-center gap-2">
-              <input type="checkbox" id="app-allow-download" checked class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+              <input type="checkbox" id="app-allow-download" checked class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-600">
               <label for="app-allow-download" class="text-xs font-medium text-slate-700 dark:text-slate-300">Allow Source Download</label>
             </div>
           </div>
@@ -977,17 +990,17 @@
         <form id="upload-ad-form" data-submit="submitPublishAd" class="p-6 sm:p-8 space-y-6 hidden">
           <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Target App</label>
-            <select id="publish-ad-target-app" required class="w-full border rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+            <select id="publish-ad-target-app" required class="w-full border rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                  <option value="">Select app...</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-bold mb-1 text-slate-700 dark:text-slate-400">Tagline</label>
-            <input type="text" id="publish-ad-text" required maxlength="80" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-slate-50 border-slate-300 text-slate-900 dark:bg-slate-900 dark:border-slate-700 dark:text-white" />
+            <input type="text" id="publish-ad-text" required maxlength="80" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-600 outline-none text-sm bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button type="button" data-click="navigateFromAdmin" class="px-6 py-2 rounded-full font-bold text-sm text-slate-500 hover:bg-slate-100">Cancel</button>
-            <button type="submit" id="publish-ad-submit-btn" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-8 py-2 rounded-full font-bold text-sm shadow-sm">Pay 10k & Publish</button>
+            <button type="submit" id="publish-ad-submit-btn" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-8 py-2 rounded-full font-bold text-sm shadow-sm">Pay 10k & Publish</button>
           </div>
         </form>
       </div>
@@ -1001,7 +1014,7 @@
           <button data-click="navigate" data-arg="home" class="px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-bold text-slate-600 dark:text-slate-300">Exit</button>
         </div>
 
-        <div class="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-700 overflow-x-auto hide-scrollbar">
+        <div class="flex gap-1 mb-4 border-b border-slate-200 dark:border-slate-800 overflow-x-auto hide-scrollbar">
           <button data-click="switchAdminTab" data-arg="apps" id="tab-btn-apps" class="px-4 py-2 text-sm font-bold text-emerald-600 border-b-2 border-emerald-600 whitespace-nowrap">Apps</button>
           <button data-click="switchAdminTab" data-arg="users" id="tab-btn-users" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent whitespace-nowrap">Users</button>
           <button data-click="switchAdminTab" data-arg="logs" id="tab-btn-logs" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent whitespace-nowrap">Logs</button>
@@ -1011,58 +1024,58 @@
           <button data-click="switchAdminTab" data-arg="coins" id="tab-btn-coins" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border-b-2 border-transparent whitespace-nowrap">Coins</button>
         </div>
 
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
           
           <!-- Apps -->
           <div id="admin-tab-apps" class="overflow-x-auto block">
             <table class="w-full text-left text-sm">
               <thead>
-                <tr class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-500">
+                <tr class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500">
                   <th class="p-4 font-medium">App Name</th>
                   <th class="p-4 font-medium">Developer</th>
                   <th class="p-4 font-medium">Type</th>
                   <th class="p-4 font-medium text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="admin-apps-list" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              <tbody id="admin-apps-list" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
             </table>
           </div>
 
           <!-- Users -->
           <div id="admin-tab-users" class="overflow-x-auto hidden">
-            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
               <span class="text-sm font-bold">User Management</span>
-              <button data-click="adminResetAllUsers" class="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded">Reset Users</button>
+              <button data-click="adminResetAllUsers" class="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-full font-bold">Reset Users</button>
             </div>
             <table class="w-full text-left text-sm">
-              <tbody id="admin-users-list" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              <tbody id="admin-users-list" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
             </table>
           </div>
 
           <!-- Logs -->
           <div id="admin-tab-logs" class="overflow-x-auto hidden">
             <table class="w-full text-left text-sm">
-              <tbody id="admin-logs-list" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              <tbody id="admin-logs-list" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
             </table>
           </div>
 
           <!-- News -->
           <div id="admin-tab-news" class="overflow-x-auto hidden">
-            <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-800">
               <form data-submit="adminCreateNews" class="flex gap-2">
-                <input type="text" id="admin-news-input" required placeholder="Announcement..." class="flex-1 border rounded px-3 py-1.5 text-sm outline-none dark:bg-slate-800 dark:border-slate-700">
-                <button type="submit" id="admin-news-submit" class="bg-emerald-600 text-white px-4 py-1.5 rounded text-sm font-bold">Post</button>
+                <input type="text" id="admin-news-input" required placeholder="Announcement..." class="flex-1 border rounded-full px-4 py-1.5 text-sm outline-none bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                <button type="submit" id="admin-news-submit" class="bg-emerald-600 text-white px-5 py-1.5 rounded-full text-sm font-bold shadow-sm">Post</button>
               </form>
             </div>
             <table class="w-full text-left text-sm">
-              <tbody id="admin-news-list" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              <tbody id="admin-news-list" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
             </table>
           </div>
 
           <!-- Feedback -->
           <div id="admin-tab-feedback" class="overflow-x-auto hidden">
             <table class="w-full text-left text-sm">
-              <tbody id="admin-feedback-list" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              <tbody id="admin-feedback-list" class="divide-y divide-slate-100 dark:divide-slate-800/60"></tbody>
             </table>
           </div>
 
@@ -1074,8 +1087,8 @@
             </div>
             <div>
               <form data-submit="adminAddDevUid" class="flex gap-2 mb-4">
-                 <input type="text" id="admin-new-dev-uid" required placeholder="Add Developer by Email" class="flex-1 border rounded px-3 py-1.5 text-sm dark:bg-slate-800 dark:border-slate-700">
-                 <button type="submit" class="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm font-bold">Add</button>
+                 <input type="text" id="admin-new-dev-uid" required placeholder="Add Developer by Email" class="flex-1 border rounded-full px-4 py-1.5 text-sm bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                 <button type="submit" class="bg-emerald-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">Add</button>
               </form>
               <h3 class="font-bold text-sm mb-3">Approved Developers</h3>
               <div id="admin-allowed-devs" class="space-y-2"></div>
