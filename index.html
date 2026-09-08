@@ -16,7 +16,7 @@
   <title>NexusStore</title>
   
   <!-- Nexus Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy.z3w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy.z3w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY6WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -124,7 +124,7 @@
     }
 
     #picks-container > *, #sponsored-container > * {
-      min-height: 340px;
+      min-height: 320px;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -132,6 +132,7 @@
       overflow: hidden !important;
       border-radius: 1.5rem !important;
       isolation: isolate;
+      padding: 1.25rem !important;
     }
 
     /* Strip out inner container box backgrounds/borders for Sponsored items */
@@ -685,14 +686,14 @@
     
     <!-- Desktop Tabs Navigation -->
     <div class="hidden sm:flex max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 border-t border-cyber-border">
-        <div class="flex items-center gap-8 overflow-x-auto hide-scrollbar text-sm font-medium pt-2.5 pb-2">
-            <button id="nav-btn-home" data-click="navigate" data-arg="home" class="nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-1.5 font-bold whitespace-nowrap flex items-center gap-2">
+        <div class="flex items-center gap-8 overflow-x-auto hide-scrollbar text-sm font-medium pt-3 pb-2.5">
+            <button id="nav-btn-home" data-click="navigate" data-arg="home" class="nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-2 font-bold whitespace-nowrap flex items-center gap-2">
               <i class="ph-fill ph-sparkle text-xs"></i> For you
             </button>
-            <button id="nav-btn-leaderboard" data-click="navigate" data-arg="leaderboard" class="nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2">
+            <button id="nav-btn-leaderboard" data-click="navigate" data-arg="leaderboard" class="nav-tab-btn text-slate-400 hover:text-white pb-2 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2">
               <i class="ph-fill ph-trophy text-xs"></i> Top charts
             </button>
-            <button id="nav-btn-faq" data-click="navigate" data-arg="faq" class="nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2">
+            <button id="nav-btn-faq" data-click="navigate" data-arg="faq" class="nav-tab-btn text-slate-400 hover:text-white pb-2 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2">
               <i class="ph-fill ph-question text-xs"></i> Support
             </button>
         </div>
@@ -700,11 +701,11 @@
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-[100rem] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-[108px] pb-20 sm:pb-24 min-h-screen">
+  <main class="max-w-[100rem] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-[124px] pb-20 sm:pb-24 min-h-screen">
     
     <!-- HOME VIEW -->
     <div id="view-home" class="view-section block animate-fade-in">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2 mb-8">
         <div id="category-filters" class="flex gap-2 overflow-x-auto hide-scrollbar pb-1 w-full sm:flex-1">
           <!-- Populated by JS -->
         </div>
@@ -728,7 +729,7 @@
       </div>
 
       <!-- Hero & Sponsored Layout Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-12">
         <!-- Recommended Hero Card -->
         <section id="home-picks" class="lg:col-span-2 w-full hidden flex-col">
           <div class="flex items-center justify-between mb-4 pr-2">
@@ -737,7 +738,7 @@
             </h2>
             <span class="text-sm font-bold text-cyan-400 hover:underline cursor-pointer">Explore All</span>
           </div>
-          <div id="picks-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+          <div id="picks-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-h-[280px]">
             <!-- Hero items injected here by JS -->
           </div>
         </section>
@@ -748,25 +749,25 @@
             <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Sponsored</h2>
             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">AD</span>
           </div>
-          <div id="sponsored-container" class="flex flex-col gap-4 flex-1">
+          <div id="sponsored-container" class="flex flex-col gap-4 flex-1 min-h-[280px]">
             <!-- Sponsored item injected here by JS -->
           </div>
         </section>
       </div>
 
       <!-- Continue Playing -->
-      <section id="home-recent-section" class="hidden mb-10 animate-fade-in">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      <section id="home-recent-section" class="hidden mb-12 pt-4 animate-fade-in">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="ph-fill ph-clock-counter-clockwise text-cyan-400"></i> Continue playing
           </h2>
           <i class="ph ph-caret-right text-slate-500"></i>
         </div>
-        <div id="recent-container" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"></div>
+        <div id="recent-container" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 sm:gap-5"></div>
       </section>
 
       <!-- AI Smart Match Section -->
-      <section id="home-smart-match-section" class="hidden mb-10 animate-fade-in">
+      <section id="home-smart-match-section" class="hidden mb-12 animate-fade-in">
         <div class="flex items-center mb-4 gap-2">
           <h2 class="text-lg font-bold text-white">Suggested for you</h2>
           <span class="bg-cyan-500/10 text-cyan-400 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border border-cyan-500/30">AI MATCH</span>
@@ -1221,9 +1222,9 @@
         const tabBtns = document.querySelectorAll('.nav-tab-btn');
         tabBtns.forEach(tab => {
           if (tab.getAttribute('data-arg') === arg || (arg === 'home' && tab.innerText.includes('For you'))) {
-            tab.className = "nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-1.5 font-bold whitespace-nowrap flex items-center gap-2";
+            tab.className = "nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-2 font-bold whitespace-nowrap flex items-center gap-2";
           } else {
-            tab.className = "nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2";
+            tab.className = "nav-tab-btn text-slate-400 hover:text-white pb-2 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2";
           }
         });
       }
