@@ -107,28 +107,28 @@
     .animate-fade-in { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     
     @keyframes zoomIn {
-      from { opacity: 0; transform: scale(0.95); }
+      from { opacity: 0; transform: scale(0.96); }
       to { opacity: 1; transform: scale(1); }
     }
-    .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-    .glow-cyan {
-      box-shadow: 0 0 20px -3px rgba(0, 242, 254, 0.35);
+    /* Dynamic UI Sizing Fixes for Injected Cards */
+    #picks-container > *, #sponsored-container > * {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
-
-    /* AI Typing Indicator Dots */
-    .dot-flashing {
-        position: relative;
-        width: 6px;
-        height: 6px;
-        border-radius: 5px;
-        background-color: #00f2fe;
-        color: #00f2fe;
-        animation: dot-flashing 1s infinite linear alternate;
-        animation-delay: 0.5s;
-        margin-left: 12px;
+    /* Push buttons/footers to the bottom to equalize card heights */
+    #picks-container > * > *:last-child, #sponsored-container > * > *:last-child {
+      margin-top: auto;
     }
-    .dot-flashing::before, .dot-flashing::after {
+    /* Expand to fill the huge empty gap if there is only 1 recommended app */
+    #picks-container > *:only-child {
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body class="bg-white dark:bg-play-surfaceDark text-slate-900 dark:text-slate-100 transition-colors duration-200 font-sans selection:bg-play-green selection:text-white min-h-screen flex flex-col">
         content: '';
         display: inline-block;
         position: absolute;
@@ -673,40 +673,40 @@
       </div>
 
       <div id="home-empty" class="hidden flex-col items-center justify-center py-20 text-center animate-fade-in">
-        <i class="ph ph-magnifying-glass text-5xl text-slate-600 mb-4"></i>
-        <h2 class="text-xl font-bold mb-1 text-white">No results found</h2>
-        <p class="text-slate-400 text-sm">Try different keywords or categories.</p>
+        <i class="ph ph-magnifying-glass text-5xl text-slate-400 mb-3"></i>
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white">No results found</h2>
+        <p class="text-slate-500 text-sm max-w-sm mt-1">Try searching for different keywords or categories.</p>
       </div>
 
       <!-- Hero & Sponsored Layout Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 items-stretch">
-        <!-- Recommended Hero Card (2 Cols) -->
-        <section id="home-picks" class="lg:col-span-2 w-full hidden flex-col justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-              <i class="ph-fill ph-fire text-amber-400"></i> Recommended for you
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch mb-8">
+        <!-- Recommended Hero Card -->
+        <section id="home-picks" class="lg:col-span-2 w-full hidden flex-col">
+          <div class="flex items-center justify-between mb-4 pr-2">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+               Recommended for you
             </h2>
-            <span class="text-xs font-bold text-cyan-400 hover:underline cursor-pointer">Explore All</span>
+            <span class="text-sm font-bold text-play-green hover:underline cursor-pointer">Explore All</span>
           </div>
-          <div id="picks-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+          <div id="picks-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-h-[250px]">
             <!-- Hero items injected here by JS -->
           </div>
         </section>
 
-        <!-- Sponsored Card (1 Col) -->
-        <div id="home-sponsored-sidebar" class="w-full flex-col hidden justify-between">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-bold text-white flex items-center gap-1.5">
-              <i class="ph-fill ph-megaphone text-amber-400"></i> Sponsored
-            </h2>
-            <span class="text-[10px] font-extrabold bg-amber-400/10 text-amber-400 border border-amber-400/30 px-2 py-0.5 rounded-full">AD</span>
+        <!-- Sponsored Card -->
+        <section id="home-sponsored-sidebar" class="w-full hidden flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Sponsored</h2>
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-play-cardDark px-2 py-0.5 rounded">AD</span>
           </div>
-          <div id="sponsored-container" class="flex flex-col gap-4 flex-1">
+          <div id="sponsored-container" class="flex flex-col gap-4 flex-1 min-h-[250px]">
             <!-- Sponsored item injected here by JS -->
           </div>
-        </div>
+        </section>
       </div>
 
+      <!-- Continue Playing -->
+      <section id="home-recent-section" class="hidden animate-fade-in">
       <!-- Continue Playing -->
       <section id="home-recent-section" class="hidden mb-10 animate-fade-in">
         <div class="flex items-center justify-between mb-4">
