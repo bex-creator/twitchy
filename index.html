@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="NexusStore">
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22NexusStore%22%2C%22short_name%22%3A%22Nexus%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23080b11%22%2C%22theme_color%22%3A%22%2300f2fe%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy3M2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=%22%2C%22sizes%22%3A%22256x256%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22NexusStore%22%2C%22short_name%22%3A%22Nexus%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23080b11%22%2C%22theme_color%22%3A%22%2300f2fe%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1YiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy3M2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=%22%2C%22sizes%22%3A%22256x256%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
   
   <title>NexusStore</title>
   
@@ -121,7 +121,7 @@
       position: relative !important;
       overflow: hidden !important;
       border-radius: 1.5rem !important;
-      isolation: isolate; /* Create stacking context for pseudo overlay */
+      isolation: isolate;
     }
 
     /* Push buttons/footers to the bottom to equalize card heights */
@@ -146,9 +146,9 @@
         bottom: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        object-fit: cover !important; /* Crops image to fill the entire card bounds */
+        object-fit: cover !important;
         object-position: center !important;
-        z-index: -2 !important; /* Send image to absolute back layer */
+        z-index: -2 !important;
         border-radius: inherit !important;
         pointer-events: none !important;
     }
@@ -664,13 +664,13 @@
     <!-- Desktop Tabs Navigation -->
     <div class="hidden sm:flex max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8 border-t border-cyber-border">
         <div class="flex items-center gap-8 overflow-x-auto hide-scrollbar text-sm font-medium pt-2.5 pb-2">
-            <button data-click="navigate" data-arg="home" class="text-cyan-400 border-b-2 border-cyan-400 pb-1.5 font-bold whitespace-nowrap flex items-center gap-2">
+            <button id="nav-btn-home" data-click="navigate" data-arg="home" class="nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-1.5 font-bold whitespace-nowrap flex items-center gap-2">
               <i class="ph-fill ph-sparkle text-xs"></i> For you
             </button>
-            <button data-click="navigate" data-arg="leaderboard" class="text-slate-400 hover:text-white pb-1.5 whitespace-nowrap transition-colors flex items-center gap-2">
+            <button id="nav-btn-leaderboard" data-click="navigate" data-arg="leaderboard" class="nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2">
               <i class="ph-fill ph-trophy text-xs"></i> Top charts
             </button>
-            <button data-click="navigate" data-arg="faq" class="text-slate-400 hover:text-white pb-1.5 whitespace-nowrap transition-colors flex items-center gap-2">
+            <button id="nav-btn-faq" data-click="navigate" data-arg="faq" class="nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2">
               <i class="ph-fill ph-question text-xs"></i> Support
             </button>
         </div>
@@ -1188,6 +1188,24 @@
     </div>
 
   </main>
+
+  <script>
+    // Tab Navigation Active State Switcher
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-click="navigate"]');
+      if (btn && btn.hasAttribute('data-arg')) {
+        const arg = btn.getAttribute('data-arg');
+        const tabBtns = document.querySelectorAll('.nav-tab-btn');
+        tabBtns.forEach(tab => {
+          if (tab.getAttribute('data-arg') === arg) {
+            tab.className = "nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-1.5 font-bold whitespace-nowrap flex items-center gap-2";
+          } else {
+            tab.className = "nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2";
+          }
+        });
+      }
+    });
+  </script>
   
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
