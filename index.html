@@ -110,7 +110,7 @@
       from { opacity: 0; transform: scale(0.96); }
       to { opacity: 1; transform: scale(1); }
     }
-    .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
     /* Dynamic UI Sizing Fixes for Injected Cards */
     #picks-container > *, #sponsored-container > * {
@@ -126,38 +126,27 @@
     #picks-container > *:only-child {
       grid-column: 1 / -1;
     }
-  </style>
-</head>
-<body class="bg-white dark:bg-play-surfaceDark text-slate-900 dark:text-slate-100 transition-colors duration-200 font-sans selection:bg-play-green selection:text-white min-h-screen flex flex-col">
-        content: '';
-        display: inline-block;
-        position: absolute;
-        top: 0;
-    }
-    .dot-flashing::before {
-        left: -10px;
-        width: 6px;
-        height: 6px;
-        border-radius: 5px;
-        background-color: #00f2fe;
-        color: #00f2fe;
-        animation: dot-flashing 1s infinite alternate;
-        animation-delay: 0s;
-    }
-    .dot-flashing::after {
-        left: 10px;
-        width: 6px;
-        height: 6px;
-        border-radius: 5px;
-        background-color: #00f2fe;
-        color: #00f2fe;
-        animation: dot-flashing 1s infinite alternate;
-        animation-delay: 1s;
+
+    /* FORCE IMAGES TO TAKE UP THE WHOLE CONTAINER */
+    #picks-container img, 
+    #sponsored-container img, 
+    #grid-container img, 
+    #recent-container img,
+    #app-viewer-icon img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
     }
 
-    @keyframes dot-flashing {
-        0% { background-color: #00f2fe; }
-        50%, 100% { background-color: rgba(0, 242, 254, 0.2); }
+    /* Ensure upload previews perfectly fill the dashed boxes */
+    #icon-preview, #ad-image-preview {
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        z-index: 1 !important;
+        border-radius: inherit; /* Matches the rounded corners of the parent */
     }
   </style>
 </head>
@@ -1168,6 +1157,8 @@
   <div id="toast-container" class="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
   
   </div> <!-- END APP ROOT -->
+</body>
+</html>
 
   <!-- Include Transformers.js Local AI Web Worker Script inline -->
   <script type="module">
