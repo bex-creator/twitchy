@@ -127,15 +127,30 @@
       grid-column: 1 / -1;
     }
 
-    /* FORCE IMAGES TO TAKE UP THE WHOLE CONTAINER */
+    /* FORCE IMAGES TO BE THE BACKGROUND AND CUT TO PERFECT SIZE */
+    #picks-container div:has(> img), 
+    #sponsored-container div:has(> img), 
+    #grid-container div:has(> img), 
+    #recent-container div:has(> img) {
+        position: relative !important;
+        overflow: hidden !important;
+        z-index: 1;
+    }
+
     #picks-container img, 
     #sponsored-container img, 
     #grid-container img, 
     #recent-container img,
     #app-viewer-icon img {
+        position: absolute !important;
+        inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        object-fit: cover !important;
+        object-fit: cover !important; /* Crops to perfect size without stretching */
+        object-position: center !important;
+        z-index: -1 !important; /* Acts as a background behind other content */
+        border-radius: inherit !important;
+        pointer-events: none !important;
     }
 
     /* Ensure upload previews perfectly fill the dashed boxes */
@@ -1157,8 +1172,6 @@
   <div id="toast-container" class="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
   
   </div> <!-- END APP ROOT -->
-</body>
-</html>
 
   <!-- Include Transformers.js Local AI Web Worker Script inline -->
   <script type="module">
