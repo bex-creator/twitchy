@@ -16,7 +16,7 @@
   <title>NexusStore</title>
   
   <!-- Nexus Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy4zM2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy.z3w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -61,6 +61,10 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap');
+
+    :root {
+      --accent-color: #00f2fe;
+    }
 
     body {
       background-color: #080b11;
@@ -112,9 +116,15 @@
     }
     .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    /* Dynamic UI Sizing & Card Fill Fixes */
+    /* Dynamic Hero & Sponsored Sizing Match */
+    #picks-container, #sponsored-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
     #picks-container > *, #sponsored-container > * {
-      min-height: 280px;
+      min-height: 340px;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -124,12 +134,24 @@
       isolation: isolate;
     }
 
+    /* Strip out inner container box backgrounds/borders for Sponsored items */
+    #picks-container > div > div, 
+    #sponsored-container > div > div,
+    #picks-container .bg-white,
+    #sponsored-container .bg-white,
+    #picks-container .bg-slate-800,
+    #sponsored-container .bg-slate-800 {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
     /* Push buttons/footers to the bottom to equalize card heights */
     #picks-container > * > *:last-child, #sponsored-container > * > *:last-child {
       margin-top: auto;
     }
 
-    /* Expand to fill the grid if there is only 1 recommended app */
+    /* Expand to fill grid if single recommended app */
     #picks-container > *:only-child {
       grid-column: 1 / -1;
     }
@@ -159,7 +181,7 @@
         content: "" !important;
         position: absolute !important;
         inset: 0 !important;
-        background: linear-gradient(180deg, rgba(15, 21, 34, 0.45) 0%, rgba(15, 21, 34, 0.88) 100%) !important;
+        background: linear-gradient(180deg, rgba(15, 21, 34, 0.35) 0%, rgba(15, 21, 34, 0.92) 100%) !important;
         z-index: -1 !important;
         border-radius: inherit !important;
         pointer-events: none !important;
@@ -713,9 +735,9 @@
             <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                Recommended for you
             </h2>
-            <span class="text-sm font-bold text-play-green hover:underline cursor-pointer">Explore All</span>
+            <span class="text-sm font-bold text-cyan-400 hover:underline cursor-pointer">Explore All</span>
           </div>
-          <div id="picks-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-h-[250px]">
+          <div id="picks-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
             <!-- Hero items injected here by JS -->
           </div>
         </section>
@@ -724,9 +746,9 @@
         <section id="home-sponsored-sidebar" class="w-full hidden flex-col">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Sponsored</h2>
-            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-play-cardDark px-2 py-0.5 rounded">AD</span>
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">AD</span>
           </div>
-          <div id="sponsored-container" class="flex flex-col gap-4 flex-1 min-h-[250px]">
+          <div id="sponsored-container" class="flex flex-col gap-4 flex-1">
             <!-- Sponsored item injected here by JS -->
           </div>
         </section>
@@ -1082,7 +1104,7 @@
           </div>
           <div class="flex justify-end gap-3 pt-4 border-t border-cyber-border">
             <button type="button" data-click="navigateFromAdmin" class="px-6 py-2 rounded-full font-bold text-sm text-slate-400 hover:bg-slate-800">Cancel</button>
-            <button type="submit" id="publish-ad-submit-btn" class="bg-amber-400 hover:bg-amber-300 text-black px-8 py-2 rounded-full font-bold text-sm shadow-md">Pay 10k & Publish</button>
+            <button type="submit" id="publish-ad-submit-btn" class="bg-amber-400 hover:bg-amber-300 text-black px-8 py-2 rounded-full text-sm shadow-md">Pay 10k & Publish</button>
           </div>
         </form>
       </div>
@@ -1190,19 +1212,88 @@
   </main>
 
   <script>
-    // Tab Navigation Active State Switcher
+    // Comprehensive UI Event Handler: Tab Switcher, Theme Control & Modal Manager
     document.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-click="navigate"]');
-      if (btn && btn.hasAttribute('data-arg')) {
-        const arg = btn.getAttribute('data-arg');
+      // 1. Navigation Tab Switching & Indicator Highlight
+      const navBtn = e.target.closest('[data-click="navigate"]');
+      if (navBtn && navBtn.hasAttribute('data-arg')) {
+        const arg = navBtn.getAttribute('data-arg');
         const tabBtns = document.querySelectorAll('.nav-tab-btn');
         tabBtns.forEach(tab => {
-          if (tab.getAttribute('data-arg') === arg) {
+          if (tab.getAttribute('data-arg') === arg || (arg === 'home' && tab.innerText.includes('For you'))) {
             tab.className = "nav-tab-btn text-cyan-400 border-b-2 border-cyan-400 pb-1.5 font-bold whitespace-nowrap flex items-center gap-2";
           } else {
             tab.className = "nav-tab-btn text-slate-400 hover:text-white pb-1.5 border-b-2 border-transparent whitespace-nowrap transition-colors flex items-center gap-2";
           }
         });
+      }
+
+      // 2. Open Theme Modal
+      const openModalBtn = e.target.closest('[data-click="showThemeModal"]');
+      if (openModalBtn) {
+        const modal = document.getElementById('theme-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      }
+
+      // 3. Close Modals
+      const closeModalBtn = e.target.closest('[data-click="closeModal"]');
+      if (closeModalBtn) {
+        const modalId = closeModalBtn.getAttribute('data-arg');
+        if (modalId) {
+          const modal = document.getElementById(modalId);
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        }
+      }
+
+      // 4. Theme Mode Switcher (Light / Dark / OLED / Space)
+      const modeBtn = e.target.closest('[data-click="setThemeMode"]');
+      if (modeBtn) {
+        const mode = modeBtn.getAttribute('data-arg');
+        const html = document.documentElement;
+        if (mode === 'light') {
+          html.classList.remove('dark');
+          document.body.style.backgroundColor = '#f8fafc';
+          document.body.style.color = '#0f172a';
+        } else if (mode === 'dark') {
+          html.classList.add('dark');
+          document.body.style.backgroundColor = '#080b11';
+          document.body.style.color = '#f8fafc';
+        } else if (mode === 'oled') {
+          html.classList.add('dark');
+          document.body.style.backgroundColor = '#000000';
+          document.body.style.color = '#ffffff';
+        } else if (mode === 'space') {
+          html.classList.add('dark');
+          document.body.style.backgroundColor = '#030712';
+          document.body.style.color = '#f3f4f6';
+        }
+      }
+
+      // 5. Theme Accent Switcher
+      const accentBtn = e.target.closest('[data-click="setThemeAccent"]');
+      if (accentBtn) {
+        const accent = accentBtn.getAttribute('data-arg');
+        const activeTabs = document.querySelectorAll('.nav-tab-btn.border-b-2');
+        const colors = {
+          emerald: '#10b981',
+          indigo: '#6366f1',
+          rose: '#f43f5e',
+          amber: '#f59e0b',
+          cyan: '#00f2fe'
+        };
+        if (colors[accent]) {
+          document.documentElement.style.setProperty('--accent-color', colors[accent]);
+          activeTabs.forEach(t => {
+            t.style.borderColor = colors[accent];
+            t.style.color = colors[accent];
+          });
+        }
       }
     });
   </script>
