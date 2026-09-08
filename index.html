@@ -11,12 +11,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="NexusStore">
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22NexusStore%22%2C%22short_name%22%3A%22Nexus%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23080b11%22%2C%22theme_color%22%3A%22%2300f2fe%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC4zNiwxMy4zM2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=%22%2C%22sizes%22%3A%22256x256%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22NexusStore%22%2C%22short_name%22%3A%22Nexus%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23080b11%22%2C%22theme_color%22%3A%22%2300f2fe%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy3M2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=%22%2C%22sizes%22%3A%22256x256%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
   
   <title>NexusStore</title>
   
   <!-- Nexus Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC4zNiwxMy4zM2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgcng9IjYwIiBmaWxsPSIjMDgwYjExIiAvPjxwYXRoIGQ9Ik0xOTQuODYsMTEzLjQzbC05Ni02NEExNS45MywxNS45MywwLDAsMCw3NC41LDQ5VjIwN2ExNiwxNiwwLDAsMCwyNC43NiwxMy4zM2w5Ni02NGExNiwxNiwwLDAsMCwwLTI2LjY2WiIgZmlsbD0iIzAwZjJmZSIgLz48L3N2Zz4=">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -112,48 +112,71 @@
     }
     .animate-zoom-in { animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-    /* Dynamic UI Sizing Fixes for Injected Cards */
+    /* Dynamic UI Sizing & Card Fill Fixes */
     #picks-container > *, #sponsored-container > * {
+      min-height: 280px;
       height: 100%;
       display: flex;
       flex-direction: column;
+      position: relative !important;
+      overflow: hidden !important;
+      border-radius: 1.5rem !important;
+      isolation: isolate; /* Create stacking context for pseudo overlay */
     }
+
     /* Push buttons/footers to the bottom to equalize card heights */
     #picks-container > * > *:last-child, #sponsored-container > * > *:last-child {
       margin-top: auto;
     }
-    /* Expand to fill the huge empty gap if there is only 1 recommended app */
+
+    /* Expand to fill the grid if there is only 1 recommended app */
     #picks-container > *:only-child {
       grid-column: 1 / -1;
     }
 
-    /* FORCE IMAGES TO BE THE BACKGROUND AND CUT TO PERFECT SIZE */
-    #picks-container div:has(> img), 
-    #sponsored-container div:has(> img), 
-    #grid-container div:has(> img), 
-    #recent-container div:has(> img) {
-        position: relative !important;
-        overflow: hidden !important;
-        z-index: 1;
-    }
-
+    /* MAKE ANY IMAGE COVER THE ENTIRE HERO/CARD BACKGROUND PERFECTLY */
     #picks-container img, 
-    #sponsored-container img, 
-    #grid-container img, 
-    #recent-container img,
-    #app-viewer-icon img {
+    #picks-container div > img,
+    #sponsored-container img,
+    #sponsored-container div > img {
         position: absolute !important;
-        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        object-fit: cover !important; /* Crops to perfect size without stretching */
+        object-fit: cover !important; /* Crops image to fill the entire card bounds */
         object-position: center !important;
-        z-index: -1 !important; /* Acts as a background behind other content */
+        z-index: -2 !important; /* Send image to absolute back layer */
         border-radius: inherit !important;
         pointer-events: none !important;
     }
 
-    /* Ensure upload previews perfectly fill the dashed boxes */
+    /* Dark Overlay Gradient over Background Images to Keep Text Legible */
+    #picks-container > *::before,
+    #sponsored-container > *::before {
+        content: "" !important;
+        position: absolute !important;
+        inset: 0 !important;
+        background: linear-gradient(180deg, rgba(15, 21, 34, 0.45) 0%, rgba(15, 21, 34, 0.88) 100%) !important;
+        z-index: -1 !important;
+        border-radius: inherit !important;
+        pointer-events: none !important;
+    }
+
+    /* Icon & Grid Image Adjustments */
+    #grid-container img, 
+    #recent-container img,
+    #app-viewer-icon img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        object-position: center !important;
+        border-radius: inherit !important;
+    }
+
+    /* Upload previews fill dashed container */
     #icon-preview, #ad-image-preview {
         position: absolute !important;
         inset: 0 !important;
@@ -161,7 +184,7 @@
         height: 100% !important;
         object-fit: cover !important;
         z-index: 1 !important;
-        border-radius: inherit; /* Matches the rounded corners of the parent */
+        border-radius: inherit;
     }
   </style>
 </head>
@@ -709,8 +732,6 @@
         </section>
       </div>
 
-      <!-- Continue Playing -->
-      <section id="home-recent-section" class="hidden animate-fade-in">
       <!-- Continue Playing -->
       <section id="home-recent-section" class="hidden mb-10 animate-fade-in">
         <div class="flex items-center justify-between mb-4">
